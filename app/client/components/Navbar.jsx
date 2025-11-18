@@ -32,7 +32,7 @@ const Nav = () => {
 
           {/* Search Box */}
           <div className="flex flex-row items-center border-2 border-gray-400 px-2 py-1 m-2 rounded-md">
-            <Search />
+            <Search/>
             <InputBase className="pl-2" placeholder="Search..." />
           </div>
         </Toolbar>

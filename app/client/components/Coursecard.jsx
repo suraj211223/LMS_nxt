@@ -2,10 +2,11 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import { Card, Grid } from "@mui/material";
+import { Card } from "@mui/material";
+import { BookOpen, Layers } from "lucide-react";
 
 
-const Coursecard = ({ id, Course, unitCount, topicCount }) => {
+const Coursecard = ({ id,courseId, Course, unitCount, topicCount }) => {
   const router = useRouter();
   return (
     <Card>
@@ -14,22 +15,41 @@ const Coursecard = ({ id, Course, unitCount, topicCount }) => {
       {/* CONTENT */}
       <div className="grow">
                 <h2 className="text-2xl mt-2 text-black line-clamp-3">{Course}</h2>
-        <h3 className="font-bold text-black text-sm">ID: {id}</h3>
-         {/* Cards */}
-          <div className="">
-        <Grid container spacing={2} direction="row">
-          <Grid item xs={6}>
-            <Card>
-             <div className="w-30 h-25 justify-center text-gray-600 text-left px-2 py-2 bg-blue-400/20">Units<br/>{unitCount || 0}</div>
-            </Card>
-          </Grid>
-          <Grid item xs={6}>
-            <Card>
-            <div className="w-30 h-25 justify-center text-gray-600 text-left px-2 py-2 bg-lime-400/20">Topics<br/>{topicCount || 0}</div>
-            </Card>
-          </Grid>
-        </Grid>
-      </div>
+        <h3 className="font-bold text-blue-500 border-2 w-max p-1 rounded-3xl my-2 bg-blue-200/40 border-blue-500 text-sm">{courseId}</h3>
+        {/* Cards */}
+        <div className="mt-4">
+          <div className="flex gap-3 w-full">
+            {/* Units Card */}
+            <div 
+              className="flex-1 rounded-xl p-3 border text-gray-700 h-16 flex flex-col justify-center"
+              style={{
+                background: "#EEF7FF",
+                borderColor: "#CDE5FF",
+              }}
+            >
+              <div className="flex items-center gap-2 text-xs font-medium">
+                <Layers size={14} />
+                Units
+              </div>
+              <p className="text-xl font-semibold">{unitCount || 0}</p>
+            </div>
+            
+            {/* Topics Card */}
+            <div
+              className="flex-1 rounded-xl p-3 border text-gray-700 h-16 flex flex-col justify-center"
+              style={{
+                background: "#FFF4FA",
+                borderColor: "#FFD9EC",
+              }}
+            >
+              <div className="flex items-center gap-2 text-xs font-medium">
+                <BookOpen size={14} />
+                Topics
+              </div>
+              <p className="text-xl font-semibold">{topicCount || 0}</p>
+            </div>
+          </div>
+        </div>
       </div>
     
       {/* BUTTON AREA (Right Bottom) */}

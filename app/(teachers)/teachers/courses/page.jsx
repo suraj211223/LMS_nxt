@@ -1,42 +1,139 @@
-import React from "react";
-import { Grid } from "@mui/material";
+"use client"; // ✨ Step 1: Make it a Client Component
+import React, { useState, useEffect } from "react";
+import { Grid, Box, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import { Masonry } from "@mui/lab";
 import Coursecard from "../../../client/components/Coursecard";
 import { Filter } from "lucide-react";
 
-async function Course() {
-  // Use the full URL for server-side fetch
-  const baseUrl = process.env.VERCEL_URL 
-    ? `https://${process.env.VERCEL_URL}` 
-    : 'http://localhost:3000';
+export default function Course() {
+  // --- ✨ Step 2: Add state for courses and filters ---
+  const [courses, setCourses] = useState([]);
+  const [filteredCourses, setFilteredCourses] = useState([]);
+  const [schoolOptions, setSchoolOptions] = useState([]);
+  const [programmeOptions, setProgrammeOptions] =useState([]);
+
+  // Filter state
+  const [selectedSchool, setSelectedSchool] = useState("");
+  const [selectedProgramme, setSelectedProgramme] = useState("");
+
+  // --- ✨ Step 3: Fetch data on the client side ---
+  useEffect(() => {
+    async function fetchData() {
+      // Client-side fetch can use a relative URL
+      const response = await fetch("/api/teacher/display");
+      if (!response.ok) {
+        console.error("Failed to fetch data");
+        return;
+      }
+
+      const data = await response.json();
+      console.log("API Response:", data); // Debug log
+      const mydata = data.courses || [];
+      console.log("Courses data:", mydata); // Debug log
+      setCourses(mydata);
+      setFilteredCourses(mydata); // Initially, all courses are shown
+
+      // --- Dynamically create filter options from the data ---
+      // Fix: Use correct property names from API response
+      const schools = [...new Set(mydata.map(item => item.department).filter(Boolean))];
+      const programmes = [...new Set(mydata.map(item => item.program).filter(Boolean))];
+      console.log("Schools extracted:", schools); // Debug log
+      console.log("Programmes extracted:", programmes); // Debug log
+      setSchoolOptions(schools);
+      setProgrammeOptions(programmes);
+    }
+
+    fetchData();
+  }, []); // Empty array means this runs once when the component mounts
+
+  // --- ✨ Step 4: Apply filters when state changes ---
+  useEffect(() => {
+    let tempCourses = [...courses];
+
+    if (selectedSchool) {
+      tempCourses = tempCourses.filter(course => course.department === selectedSchool);
+    }
+    if (selectedProgramme) {
+      tempCourses = tempCourses.filter(course => course.program === selectedProgramme);
+    }
+    
+    setFilteredCourses(tempCourses);
+  }, [selectedSchool, selectedProgramme, courses]);
+
+  // --- Handlers for the dropdowns ---
+  const handleSchoolChange = (event) => {
+    const newValue = event.target.value;
+    setSelectedSchool(newValue);
+    // Clear program filter when school is selected
+    if (newValue) {
+      setSelectedProgramme("");
+    }
+  };
   
-  const response = await fetch(`${baseUrl}/api/teacher/display`);
+  const handleProgrammeChange = (event) => {
+    const newValue = event.target.value;
+    setSelectedProgramme(newValue);
+    // Clear school filter when program is selected
+    if (newValue) {
+      setSelectedSchool("");
+    }
+  };
 
-  if (!response.ok) {
-    throw new Error("Failed to fetch data");
-  }
-
-  const data = await response.json();
-  const mydata = data.courses || []; // Handle the nested structure
 
   return (
     <>
       <div className="pt-25 text-5xl p-6 flex flex-row justify-between mr-5 ">
-        <div>
            My Courses
-        </div>
-     
-      <button className=" rounded-4xl border-2 border-black p-2">
-        <Filter/>
-      </button>
       </div>
+
+      {/* === ✨ NEW FILTER MENU BOXES === */}
+      <Box sx={{ display: 'flex', gap: 2, mb: 3, pl: 3 }}>
+        <FormControl sx={{ minWidth: 240 }}>
+          <InputLabel id="school-filter-label">Filter by School</InputLabel>
+          <Select
+            labelId="school-filter-label"
+            value={selectedSchool}
+            label="Filter by School"
+            onChange={handleSchoolChange}
+            disabled={Boolean(selectedProgramme)} // Disable when programme is selected
+          >
+            <MenuItem value="">
+              <em>All Schools</em>
+            </MenuItem>
+            {schoolOptions.map((school) => (
+              <MenuItem key={school} value={school}>{school}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl sx={{ minWidth: 240 }}>
+          <InputLabel id="programme-filter-label">Filter by Programme</InputLabel>
+          <Select
+            labelId="programme-filter-label"
+            value={selectedProgramme}
+            label="Filter by Programme"
+            onChange={handleProgrammeChange}
+            disabled={Boolean(selectedSchool)} // Disable when school is selected
+          >
+            <MenuItem value="">
+              <em>All Programmes</em>
+            </MenuItem>
+             {programmeOptions.map((prog) => (
+              <MenuItem key={prog} value={prog}>{prog}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
+      {/* ================================ */}
       
       <div className=" w-90vw text-black  p-5">
         <Grid container spacing={5}>
-          {mydata.map((item) => (
+          {/* ✨ Step 5: Map over the filteredCourses state */}
+          {filteredCourses.map((item) => (
                <Grid item xs={12} sm={6} md={4} lg={3} key={item.course_id}>
               <Coursecard 
-                id={item.course_id} 
+                 id = {item.course_id}
+                courseId={item.course_code} 
                 Course={item.name} 
                 unitCount={item.unit_count}
                 topicCount={item.topic_count}
@@ -44,10 +141,7 @@ async function Course() {
             </Grid>
           ))}
         </Grid>
-        
       </div>
     </>
   );
 }
-
-export default Course;
