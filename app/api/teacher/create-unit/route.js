@@ -5,107 +5,134 @@ import path from "path";
 
 export const runtime = "nodejs";
 
+//to prevent folder name issues on Windows/Linux
+const SAFE = (s = "") => String(s).replace(/[\/\\:?<>|"]/g, "-");
+
 export async function POST(req) {
   try {
     const form = await req.formData();
 
-    const userEmail = form.get("userEmail");
-    const schoolName = form.get("schoolName");
-    const programName = form.get("programName");
-    const semesterName = form.get("semesterName");
-    const courseCode = form.get("courseCode");
-    const courseName = form.get("courseName");
-    const courseId = form.get("courseId");
-    const unitCode = form.get("unitCode");
-    const title = form.get("title");
-    const profName = form.get("profName");
+    //these are required fields
+    const course_id = form.get("course_id");
+    const unit_title = form.get("unit_title");
+    const unit_code = form.get("unit_code");
+    const prof_name = form.get("prof_name");
 
+    //optional files uploads
     const pptFile = form.get("ppt");
-    const otherFiles = form.getAll("otherFiles");
+    const materialsFile = form.get("materials");
 
-    //validate teacher
-    const [rows] = await pool.query(
-      "SELECT user_id FROM Users WHERE email = ?",
-      [userEmail]
-    );
-
-    if (!rows.length) {
-      return NextResponse.json({ error: "Teacher not found" }, { status: 401 });
+    if (!course_id || !unit_title || !unit_code || !prof_name) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
     }
 
-    const teacher = rows[0];
+    //fetch course details for folder naming
+    const [courseRows] = await pool.query(
+      `SELECT title, course_code 
+       FROM Courses 
+       WHERE course_id = ?`,
+      [course_id]
+    );
 
-    const SAFE = (s = "") => String(s).replace(/[\/\\:?<>|"]/g, "-");
+    if (!courseRows.length) {
+      return NextResponse.json(
+        { error: "Course not found" },
+        { status: 404 }
+      );
+    }
 
+    const courseTitle = SAFE(courseRows[0].title);
+    const courseCode = SAFE(courseRows[0].course_code);
+
+    //building directory structure
+    //base storage folder from .env.local
     const base = process.env.STORAGE_BASE;
-    const school = SAFE(schoolName);
-    const program = SAFE(programName);
-    const semester = SAFE(semesterName);
-    const courseFolder = SAFE(`${courseCode} - ${courseName}`);
-    const unitFolder = SAFE(`${unitCode} - ${title} - ${profName}`);
 
-    const fullPath = path.join(base, school, program, semester, courseFolder, unitFolder);
+    if (!base) {
+      return NextResponse.json(
+        { error: "Missing STORAGE_BASE in environment" },
+        { status: 500 }
+      );
+    }
+
+    // folder structure:
+    // STORAGE_BASE / Courses / COURSECODE - COURSENAME / UNITCODE - TITLE - PROF
+    const courseFolder = SAFE(`${courseCode} - ${courseTitle}`);
+    const unitFolder = SAFE(`${unit_code} - ${unit_title} - ${prof_name}`);
+
+    const fullPath = path.join(base, courseFolder, unitFolder);
 
     await fs.mkdir(fullPath, { recursive: true });
     await fs.mkdir(path.join(fullPath, "Materials"), { recursive: true });
 
+    //optional: save PPT
     let pptFilename = null;
 
-    //save PPT
     if (pptFile && pptFile.name) {
       const arrayBuffer = await pptFile.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
+
       pptFilename = `${unitFolder}${path.extname(pptFile.name)}`;
       await fs.writeFile(path.join(fullPath, pptFilename), buffer);
     }
 
-    //insert section
-    const [insert] = await pool.query(
+    // --------- DB INSERT: COURSESECTIONS ----------
+    const [insertResult] = await pool.query(
       `INSERT INTO CourseSections 
        (course_id, title, order_index, unit_code, prof_name, storage_path, ppt_filename)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
-        courseId,
-        title,
+        course_id,
+        unit_title,
         0,
-        unitCode,
-        profName,
+        unit_code,
+        prof_name,
         fullPath,
-        pptFilename
+        pptFilename,
       ]
     );
 
-    const sectionId = insert.insertId;
+    const section_id = insertResult.insertId;
 
-    //save other materials
-    for (const file of otherFiles) {
-      if (!file || !file.name) continue;
-
-      const arrayBuffer = await file.arrayBuffer();
+    // --------- OPTIONAL: SAVE MATERIAL ----------
+    if (materialsFile && materialsFile.name) {
+      const arrayBuffer = await materialsFile.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
 
-      const filename = SAFE(file.name);
+      const filename = SAFE(materialsFile.name);
       const filePath = path.join(fullPath, "Materials", filename);
 
       await fs.writeFile(filePath, buffer);
 
       await pool.query(
-        `INSERT INTO UnitMaterials (section_id, filename, file_path, file_type, uploaded_by)
-        VALUES (?, ?, ?, ?, ?)`,
+        `INSERT INTO UnitMaterials 
+         (section_id, filename, file_path, file_type, uploaded_by)
+         VALUES (?, ?, ?, ?, ?)`,
         [
-          sectionId,
+          section_id,
           filename,
           filePath,
           path.extname(filename),
-          teacher.user_id
+          null   // uploaded_by will be null until you implement login
         ]
       );
     }
 
-    return NextResponse.json({ success: true, directory: fullPath });
+    return NextResponse.json({
+      success: true,
+      message: "Unit created successfully",
+      folder: fullPath,
+      section_id,
+    });
 
   } catch (err) {
-    console.error("route error:", err);
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    console.error("create-unit route error:", err);
+    return NextResponse.json(
+      { error: String(err) },
+      { status: 500 }
+    );
   }
 }
