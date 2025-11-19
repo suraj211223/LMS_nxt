@@ -69,6 +69,31 @@ export default function CourseStructureDesign() {
     setOpenScriptModal(true);
   };
 
+  const handleDeleteTopic = async (topicId, topicTitle) => {
+    // Confirm deletion
+    if (!window.confirm(`Are you sure you want to delete "${topicTitle}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/teacher/delete-topic?topicId=${topicId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to delete topic");
+      }
+
+      // Refresh the course data to show the updated list
+      fetchCourse();
+      
+    } catch (error) {
+      console.error("Error deleting topic:", error);
+      alert(`Error deleting topic: ${error.message}`);
+    }
+  };
+
   if (!course) return <p>Loading...</p>;
 
   const getAllTopics = () => {
@@ -121,7 +146,7 @@ export default function CourseStructureDesign() {
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                       <div className="flex justify-between w-full">
                         <span className="font-medium">
-                          Unit {unitIndex + 1}: {unit.name}
+                          Unit {unit.order}: {unit.name}
                         </span>
                         <span className="text-gray-500 text-sm">
                           {unit.topics ? unit.topics.length : 0} topics
@@ -255,7 +280,13 @@ export default function CourseStructureDesign() {
                                   </Tooltip>
 
                                   <Tooltip title="Delete Topic">
-                                    <IconButton size="small" color="error">
+                                    <IconButton
+                                      size="small"
+                                      color="error"
+                                      onClick={() =>
+                                        handleDeleteTopic(topic.content_id, topic.name)
+                                      }
+                                    >
                                       <Trash />
                                     </IconButton>
                                   </Tooltip>
@@ -267,7 +298,7 @@ export default function CourseStructureDesign() {
                         <Button
                           variant="contained"
                           className="w-full mt-2"
-                          onClick={() => handleOpenTopicModal(unitId)} // ✨ Pass context
+                          onClick={() => handleOpenTopicModal(unit.section_id)} // Use section_id, not prefixed id
                         >
                           + Add Topic
                         </Button>
@@ -297,6 +328,7 @@ export default function CourseStructureDesign() {
       <Createunitmodal
         open={openUnitModal}
         onClose={() => setOpenUnitModal(false)}
+        courseId={params.id} // Pass the courseId
       />
 
       <CreateTopicmodal

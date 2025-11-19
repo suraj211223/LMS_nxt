@@ -1,0 +1,122 @@
+LMS_nxt/
+│
+├── app/
+│   │   layout.js
+│   │   page.jsx
+│   │   globals.css
+│   │   favicon.ico
+│   │
+│   ├── about/
+│   │     page.jsx
+│   │
+│   ├── login/
+│   │     page.jsx
+│   │
+│   ├── teacher/
+│   │   ├── dashboard/
+│   │   │     page.jsx
+│   │   └── create-unit/
+│   │         page.jsx
+│   │
+│   ├── admin/
+│   │   ├── dashboard/
+│   │   │     page.jsx
+│   │   ├── schools/
+│   │   │   └── create/
+│   │   │         page.jsx
+│   │   ├── programs/
+│   │   │   └── create/
+│   │   │         page.jsx
+│   │   └── courses/
+│   │       └── create/
+│   │             page.jsx
+│   │
+│   ├── schools/
+│   │   │  page.jsx
+│   │   └── [school_id]/
+│   │        └── programs/
+│   │             page.jsx
+│   │
+│   ├── programs/
+│   │   └── [program_id]/
+│   │        └── courses/
+│   │             page.jsx
+│   │
+│   ├── courses/
+│       └── [course_id]/
+│            └── units/
+│                 │  page.jsx
+│                 └── [unit_id]/
+│                        page.jsx
+│
+│
+├── app/api/
+│   ├── auth/
+│   │     └── login/
+│   │           route.js
+│   │
+│   ├── admin/
+│   │   ├── schools/
+│   │   │     └── create/
+│   │   │           route.js
+│   │   ├── programs/
+│   │   │     └── create/
+│   │   │           route.js
+│   │   └── courses/
+│   │         └── create/
+│   │               route.js
+│   │
+│   ├── teacher/
+│   │     └── create-unit/
+│   │           route.js
+│   │
+│   └── navigation/
+│       ├── schools/
+│       │    route.js
+│       │    └── [school_id]/
+│       │           └── programs/
+│       │                 route.js
+│       │
+│       ├── programs/
+│       │    └── [program_id]/
+│       │           └── courses/
+│       │                 route.js
+│       │
+│       └── courses/
+│            └── [course_id]/
+│                 └── units/
+│                       route.js
+│
+│
+├── client/
+│   └── components/
+│         Navbar.jsx
+│
+├── database/
+│   ├── schema/
+│   │     ddl_alter.sql
+│   │     full_schema.sql
+│   │     schema_reference.md
+│   └── test/
+│         test.sql
+│
+├── lib/
+│     db.js
+│
+├── public/
+│     file.svg
+│     globe.svg
+│     next.svg
+│     vercel.svg
+│     window.svg
+│
+├── .env.local
+├── .gitignore
+├── next.config.mjs
+├── postcss.config.mjs
+├── eslint.config.mjs
+├── jsconfig.json
+├── tsconfig.json
+├── package.json
+├── package-lock.json
+└── README.md

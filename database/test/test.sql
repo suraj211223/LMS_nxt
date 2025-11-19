@@ -1,5 +1,9 @@
+/*test DB — LMS_nxt
+this is safe to re-run. Auto-creates base data + test teacher. */
+
 CREATE DATABASE IF NOT EXISTS lms;
 USE lms;
+
 
 
 CREATE TABLE IF NOT EXISTS Schools (
@@ -51,30 +55,57 @@ CREATE TABLE IF NOT EXISTS CourseSections (
     FOREIGN KEY (course_id) REFERENCES Courses(course_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+-- Add unit_code if missing
+SELECT COUNT(*) INTO @col_exists 
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_SCHEMA = 'lms'
+  AND TABLE_NAME = 'CourseSections'
+  AND COLUMN_NAME = 'unit_code';
+
+SET @sql = IF(@col_exists = 0,
+    'ALTER TABLE CourseSections ADD COLUMN unit_code VARCHAR(50) DEFAULT NULL',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 
-ALTER TABLE CourseSections
-    ADD COLUMN unit_code VARCHAR(50) DEFAULT NULL,
-    ADD COLUMN prof_name VARCHAR(255) DEFAULT NULL,
-    ADD COLUMN storage_path TEXT DEFAULT NULL,
-    ADD COLUMN ppt_filename VARCHAR(512) DEFAULT NULL;
+-- Add prof_name if missing
+SELECT COUNT(*) INTO @col_exists 
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_SCHEMA = 'lms'
+  AND TABLE_NAME = 'CourseSections'
+  AND COLUMN_NAME = 'prof_name';
 
-CREATE TABLE IF NOT EXISTS UnitMaterials (
-    material_id INT PRIMARY KEY AUTO_INCREMENT,
-    section_id INT NOT NULL,
-    filename VARCHAR(512) NOT NULL,
-    file_path TEXT NOT NULL,
-    file_type VARCHAR(100) DEFAULT NULL,
-    uploaded_by INT DEFAULT NULL,
-    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (section_id) REFERENCES CourseSections(section_id) ON DELETE CASCADE,
-    FOREIGN KEY (uploaded_by) REFERENCES Users(user_id)
-);
-
-ALTER TABLE Courses
-    MODIFY COLUMN course_code VARCHAR(50) NOT NULL;
+SET @sql = IF(@col_exists = 0,
+    'ALTER TABLE CourseSections ADD COLUMN prof_name VARCHAR(255) DEFAULT NULL',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 
+-- Add storage_path if missing
+SELECT COUNT(*) INTO @col_exists 
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_SCHEMA = 'lms'
+  AND TABLE_NAME = 'CourseSections'
+  AND COLUMN_NAME = 'storage_path';
+
+SET @sql = IF(@col_exists = 0,
+    'ALTER TABLE CourseSections ADD COLUMN storage_path TEXT DEFAULT NULL',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+
+-- Add ppt_filename if missing
+SELECT COUNT(*) INTO @col_exists 
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_SCHEMA = 'lms'
+  AND TABLE_NAME = 'CourseSections'
+  AND COLUMN_NAME = 'ppt_filename';
+
+SET @sql = IF(@col_exists = 0,
+    'ALTER TABLE CourseSections ADD COLUMN ppt_filename VARCHAR(512) DEFAULT NULL',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+/* Insert base roles (admin, teacher, editor) */
 INSERT INTO Roles (role_name, can_edit_courses, can_manage_system, can_upload_content)
 VALUES 
 ('admin', 1, 1, 1),
@@ -82,20 +113,24 @@ VALUES
 ('editor', 0, 0, 1)
 ON DUPLICATE KEY UPDATE role_name = role_name;
 
+/* Test teacher account (used for login during development)
+Email: testteacher@CU.in*/
 INSERT INTO Users (role_id, email, password_hash, first_name, last_name)
 VALUES (
     (SELECT role_id FROM Roles WHERE role_name='teacher'),
-    'testteacher@college.edu',
+    'testteacher@CU.in',
     'dummy',
     'Test',
     'Teacher'
 )
 ON DUPLICATE KEY UPDATE email = email;
 
+/* insert a school */
 INSERT INTO Schools (school_name)
 VALUES ('School of Science')
 ON DUPLICATE KEY UPDATE school_name = school_name;
 
+/* insert a program */
 INSERT INTO Programs (school_id, program_name, program_code)
 VALUES (
     (SELECT school_id FROM Schools WHERE school_name='School of Science'),
@@ -104,6 +139,7 @@ VALUES (
 )
 ON DUPLICATE KEY UPDATE program_name = program_name;
 
+/* insert a course */
 INSERT INTO Courses (program_id, title, course_code, status)
 VALUES (
     (SELECT program_id FROM Programs WHERE program_code='BSC'),
@@ -113,5 +149,32 @@ VALUES (
 )
 ON DUPLICATE KEY UPDATE title = title;
 
+INSERT INTO Users (role_id, email, password_hash, first_name, last_name)
+VALUES (
+    (SELECT role_id FROM Roles WHERE role_name='admin'),
+    'admin@CU.in',
+    'dummy',
+    'Admin',
+    'User'
+)
+ON DUPLICATE KEY UPDATE email = email;
+
+INSERT INTO Users (role_id, email, password_hash, first_name, last_name)
+VALUES (
+    (SELECT role_id FROM Roles WHERE role_name='editor'),
+    'editor@CU.in',
+    'dummy',
+    'Editor',
+    'User'
+)
+ON DUPLICATE KEY UPDATE email = email;
+/* For testing navigation: insert some units (optional) */
+/*
+INSERT INTO CourseSections (course_id, title, order_index)
+VALUES (
+    (SELECT course_id FROM Courses WHERE course_code='BSC-OS-101'),
+    'Unit-1: Introduction to OS',
+    1
+);*/
 
 SELECT 'TEST DATABASE READY' AS status;
