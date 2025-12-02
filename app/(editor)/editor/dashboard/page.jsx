@@ -21,15 +21,16 @@ import {
   TextField,
   Tooltip
 } from "@mui/material";
-import { Edit, Visibility, ExpandMore, VideoCall, Upload } from "@mui/icons-material";
+import { Edit, Visibility, ExpandMore, VideoCall, Upload, CheckCircle } from "@mui/icons-material";
 
 const EditorDash = () => {
   const [stats, setStats] = useState({
-    totalUsers: 0,
-    teachers: 0,
-    editors: 0,
-    programs: 0,
-    topics: 0
+    totalTopics: 0,
+    published: 0,
+    inEditing: 0,
+    scripted: 0,
+    underReview: 0,
+    readyForVideo: 0
   });
   const [topicsInProgress, setTopicsInProgress] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -50,12 +51,14 @@ const EditorDash = () => {
     { id: 'Published', label: 'Published', color: '#22c55e' }
   ];
 
-  // Filter topics to show only those in "Editing" status (index 2)
-  const editingTopics = topicsInProgress.filter(topic => topic.workflow_status === 'Editing');
+  // Filter topics to show those in "Editing", "Scripted", "Post-Editing", "Ready_for_Video_Prep", "Under_Review", or "Published" status
+  const editingTopics = topicsInProgress.filter(topic =>
+    ['Scripted', 'Editing', 'Post-Editing', 'Ready_for_Video_Prep', 'Under_Review', 'Published'].includes(topic.workflow_status)
+  );
 
   // Handle record button click
   const handleRecordClick = async (topic) => {
-    if (topic.workflow_status === 'Editing') {
+    if (topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted') {
       // Update status to Post-Editing
       try {
         const res = await fetch(`/api/topics/update-status`, {
@@ -76,9 +79,10 @@ const EditorDash = () => {
       } catch (error) {
         console.error('Error updating status:', error);
       }
-    } else if (topic.workflow_status === 'Post-Editing') {
-      // Show upload modal
+    } else if (['Post-Editing', 'Ready_for_Video_Prep', 'Under_Review'].includes(topic.workflow_status)) {
+      // Show upload modal for initial upload OR editing existing link
       setCurrentTopic(topic);
+      setVideoLink(topic.video_link || ""); // Pre-fill if exists (need to ensure API returns video_link)
       setUploadModalOpen(true);
     }
   };
@@ -172,13 +176,13 @@ const EditorDash = () => {
           {/* DASHBOARD CARDS */}
           <Grid container spacing={3} direction="row" className="pt-8 px-20">
             {[
-              { label: "Total Topics", value: stats.totalUsers, bg: "rgba(59,130,246,0.1)", color: "#1d4ed8", borderColor: "#3b82f6" },
-              { label: "Published", value: stats.teachers, bg: "rgba(34,197,94,0.1)", color: "#15803d", borderColor: "#22c55e" },
-              { label: "In Editing", value: stats.editors, bg: "rgba(251,146,60,0.1)", color: "#c2410c", borderColor: "#fb923c" },
-              { label: "Under Review", value: stats.programs, bg: "rgba(168,85,247,0.1)", color: "#7c2d12", borderColor: "#a855f7" },
-              { label: "Ready for Video", value: stats.topics, bg: "rgba(6,182,212,0.1)", color: "#0e7490", borderColor: "#06b6d4" },
+              { label: "Total Topics", value: stats.totalTopics, bg: "rgba(59,130,246,0.1)", color: "#1d4ed8", borderColor: "#3b82f6" },
+              { label: "Published", value: stats.published, bg: "rgba(34,197,94,0.1)", color: "#15803d", borderColor: "#22c55e" },
+              { label: "In Editing", value: stats.inEditing + (stats.scripted || 0), bg: "rgba(251,146,60,0.1)", color: "#c2410c", borderColor: "#fb923c" },
+              { label: "Under Review", value: stats.underReview, bg: "rgba(168,85,247,0.1)", color: "#7c2d12", borderColor: "#a855f7" },
+              { label: "Ready for Video", value: stats.readyForVideo, bg: "rgba(6,182,212,0.1)", color: "#0e7490", borderColor: "#06b6d4" },
             ].map((item, index) => (
-              <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }} key={index}>
+              <Grid item xs={12} sm={6} md={4} lg={2.4} key={index}>
                 <Card
                   sx={{
                     p: 3,
@@ -198,10 +202,10 @@ const EditorDash = () => {
                     }
                   }}
                 >
-                  <Typography 
-                    variant="h6" 
-                    sx={{ 
-                      color: item.color, 
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      color: item.color,
                       fontWeight: 600,
                       textAlign: "center",
                       fontSize: "1rem",
@@ -210,10 +214,10 @@ const EditorDash = () => {
                   >
                     {item.label}
                   </Typography>
-                  <Typography 
-                    variant="h3" 
-                    sx={{ 
-                      color: "#000", 
+                  <Typography
+                    variant="h3"
+                    sx={{
+                      color: "#000",
                       fontWeight: 700,
                       fontSize: "2.5rem"
                     }}
@@ -227,19 +231,19 @@ const EditorDash = () => {
 
           {/* TOPICS IN EDITING SECTION */}
           <Box sx={{ mx: 20, mt: 8 }}>
-            <Box sx={{ 
-              display: "flex", 
-              justifyContent: "space-between", 
-              alignItems: "center", 
-              mb: 3 
+            <Box sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 3
             }}>
               <Typography variant="h4" sx={{ fontWeight: 600, color: "#374151" }}>
                 Topics in Editing
               </Typography>
               <Chip
                 label={`${editingTopics.length} Active`}
-                sx={{ 
-                   
+                sx={{
+
                   color: "black",
                   fontWeight: 600
                 }}
@@ -247,9 +251,9 @@ const EditorDash = () => {
             </Box>
 
             {/* ACCORDION TOPIC LAYOUT */}
-            <Paper sx={{ 
-              p: 3, 
-              borderRadius: "16px", 
+            <Paper sx={{
+              p: 3,
+              borderRadius: "16px",
               boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
               border: "1px solid rgba(0,0,0,0.05)"
             }}>
@@ -259,7 +263,7 @@ const EditorDash = () => {
                     <Accordion
                       key={topic.content_id}
                       expanded={expandedTopic === topic.content_id}
-                      onChange={() => 
+                      onChange={() =>
                         setExpandedTopic(expandedTopic === topic.content_id ? null : topic.content_id)
                       }
                       sx={{
@@ -269,7 +273,7 @@ const EditorDash = () => {
                         "&.Mui-expanded": { margin: "0 0 16px 0" }
                       }}
                     >
-                      <AccordionSummary 
+                      <AccordionSummary
                         expandIcon={<ExpandMore />}
                         sx={{
                           backgroundColor: `${getStatusColor(topic.workflow_status)}10`,
@@ -282,7 +286,7 @@ const EditorDash = () => {
                             <Chip
                               label={`Topic ${index + 1}`}
                               size="small"
-                              sx={{ 
+                              sx={{
                                 backgroundColor: getStatusColor(topic.workflow_status),
                                 color: "white",
                                 fontWeight: 600
@@ -295,7 +299,7 @@ const EditorDash = () => {
                               label={topic.workflow_status.replace('_', ' ')}
                               size="small"
                               variant="outlined"
-                              sx={{ 
+                              sx={{
                                 borderColor: getStatusColor(topic.workflow_status),
                                 color: getStatusColor(topic.workflow_status)
                               }}
@@ -317,7 +321,7 @@ const EditorDash = () => {
                         <Box sx={{ p: 2 }}>
                           {/* Topic Details */}
                           <Grid container spacing={3}>
-                            <Grid size={{ xs: 12, md: 6 }}>
+                            <Grid item xs={12} md={6}>
                               <Box sx={{ mb: 3 }}>
                                 <Typography variant="h6" sx={{ mb: 2, color: "#374151", fontWeight: 600 }}>
                                   Topic Information
@@ -341,7 +345,7 @@ const EditorDash = () => {
                               </Box>
                             </Grid>
 
-                            <Grid size={{ xs: 12, md: 6 }}>
+                            <Grid item xs={12} md={6}>
                               {/* Workflow Progress */}
                               <Box sx={{ mb: 3 }}>
                                 <Typography variant="h6" sx={{ mb: 2, color: "#374151", fontWeight: 600 }}>
@@ -351,9 +355,9 @@ const EditorDash = () => {
                                   <Typography variant="body2" sx={{ fontWeight: 500, color: "#6b7280" }}>
                                     Current Status
                                   </Typography>
-                                  <Typography 
-                                    variant="body2" 
-                                    sx={{ 
+                                  <Typography
+                                    variant="body2"
+                                    sx={{
                                       fontWeight: 600,
                                       color: getStatusColor(topic.workflow_status)
                                     }}
@@ -379,17 +383,17 @@ const EditorDash = () => {
                           </Grid>
 
                           {/* Action Buttons */}
-                          <Box sx={{ 
-                            display: "flex", 
-                            justifyContent: "flex-end", 
-                            gap: 2, 
+                          <Box sx={{
+                            display: "flex",
+                            justifyContent: "flex-end",
+                            gap: 2,
                             pt: 3,
                             borderTop: "1px solid #e5e7eb"
                           }}>
                             <Tooltip title="Edit Topic">
-                              <IconButton 
+                              <IconButton
                                 size="medium"
-                                sx={{ 
+                                sx={{
                                   backgroundColor: "#3b82f6",
                                   color: "white",
                                   "&:hover": { backgroundColor: "#2563eb" }
@@ -401,9 +405,9 @@ const EditorDash = () => {
                             </Tooltip>
 
                             <Tooltip title="View Topic Details">
-                              <IconButton 
+                              <IconButton
                                 size="medium"
-                                sx={{ 
+                                sx={{
                                   backgroundColor: "#10b981",
                                   color: "white",
                                   "&:hover": { backgroundColor: "#059669" }
@@ -414,30 +418,57 @@ const EditorDash = () => {
                               </IconButton>
                             </Tooltip>
 
-                            <Tooltip 
+                            <Tooltip
                               title={
-                                topic.workflow_status === 'Editing' 
-                                  ? "Start Recording" 
-                                  : "Upload Video"
+                                (topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted')
+                                  ? "Start Recording"
+                                  : (topic.workflow_status === 'Post-Editing' ? "Upload Video" : (topic.workflow_status === 'Published' ? "Complete Task" : "Edit Video Link"))
                               }
                             >
                               <Button
                                 variant="contained"
                                 startIcon={
-                                  topic.workflow_status === 'Editing' ? <VideoCall /> : <Upload />
+                                  (topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted') ? <VideoCall /> : (topic.workflow_status === 'Published' ? <CheckCircle /> : <Upload />)
                                 }
-                                onClick={() => handleRecordClick(topic)}
+                                onClick={() => {
+                                  if (topic.workflow_status === 'Published') {
+                                    if (window.confirm("Mark this task as fully complete? This will remove it from your active list.")) {
+                                      // Here we would ideally update status to 'Completed', but since we can't change schema,
+                                      // we'll just filter it out locally or refresh to show it's done. 
+                                      // For now, let's just alert.
+                                      alert("Great job! Task marked as complete.");
+                                      // Optionally, we could trigger a refresh or local state update to hide it.
+                                      setTopicsInProgress(prev => prev.filter(t => t.content_id !== topic.content_id));
+                                    }
+                                  } else {
+                                    handleRecordClick(topic);
+                                  }
+                                }}
                                 sx={{
-                                  backgroundColor: topic.workflow_status === 'Editing' ? "#dc2626" : "#7c3aed",
+                                  backgroundColor: (topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted') ? "#dc2626" : (topic.workflow_status === 'Published' ? "#10b981" : "#7c3aed"),
                                   "&:hover": {
-                                    backgroundColor: topic.workflow_status === 'Editing' ? "#b91c1c" : "#6d28d9"
+                                    backgroundColor: (topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted') ? "#b91c1c" : (topic.workflow_status === 'Published' ? "#059669" : "#6d28d9")
                                   },
                                   fontWeight: 600
                                 }}
                               >
-                                {topic.workflow_status === 'Editing' ? "Record" : "Upload Video"}
+                                {(topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted') ? "Record" : (topic.workflow_status === 'Post-Editing' ? "Upload Video" : (topic.workflow_status === 'Published' ? "Finish" : "Edit Video Link"))}
                               </Button>
                             </Tooltip>
+
+                            {/* Feedback Button - Only show if review notes exist */}
+                            {topic.review_notes && (
+                              <Tooltip title="View Teacher Feedback">
+                                <Button
+                                  variant="outlined"
+                                  startIcon={<Visibility />}
+                                  onClick={() => alert(`Feedback: ${topic.review_notes}`)} // Replace with a proper modal if needed
+                                  sx={{ borderColor: '#f59e0b', color: '#f59e0b' }}
+                                >
+                                  Feedback
+                                </Button>
+                              </Tooltip>
+                            )}
                           </Box>
                         </Box>
                       </AccordionDetails>
@@ -458,8 +489,8 @@ const EditorDash = () => {
           </Box>
 
           {/* VIDEO UPLOAD MODAL */}
-          <Dialog 
-            open={uploadModalOpen} 
+          <Dialog
+            open={uploadModalOpen}
             onClose={() => setUploadModalOpen(false)}
             maxWidth="sm"
             fullWidth
@@ -489,19 +520,19 @@ const EditorDash = () => {
               />
             </DialogContent>
             <DialogActions sx={{ p: 3, gap: 1 }}>
-              <Button 
+              <Button
                 onClick={() => setUploadModalOpen(false)}
                 variant="outlined"
                 sx={{ borderRadius: "8px" }}
               >
                 Cancel
               </Button>
-              <Button 
+              <Button
                 onClick={handleVideoUpload}
                 variant="contained"
                 disabled={!videoLink}
                 startIcon={<Upload />}
-                sx={{ 
+                sx={{
                   borderRadius: "8px",
                   fontWeight: 600
                 }}

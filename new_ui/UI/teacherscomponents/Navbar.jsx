@@ -10,17 +10,13 @@ const Nav = () => {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const userId = searchParams.get('userId');
+  const handleNavigation = (path) => {
+    router.push(path);
+    setOpen(false);
+  };
 
   const toggleDrawer = (value) => {
     setOpen(value);
-  };
-
-  const handleNavigation = (path) => {
-    const url = userId ? `${path}?userId=${userId}` : path;
-    router.push(url);
-    setOpen(false);
   };
 
   const isActive = (path) => {
@@ -86,15 +82,7 @@ const Nav = () => {
               Courses
             </button>
 
-            <button
-              className={`rounded-xl px-3 py-2 transition-all duration-200 ${isActive('/teachers/programs')
-                ? "bg-black text-white"
-                : "bg-white text-black hover:bg-gray-200"
-                }`}
-              onClick={() => handleNavigation('/teachers/programs')}
-            >
-              Programs
-            </button>
+
           </div>
 
           {/* SIGN OUT BUTTON AT BOTTOM */}

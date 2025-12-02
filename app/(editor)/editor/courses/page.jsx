@@ -1,14 +1,14 @@
 "use client"; // ✨ Step 1: Make it a Client Component
 import React, { useState, useEffect } from "react";
 import { Grid, Box, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
-import EditorCoursecard from "../../../../client/components/EditorCoursecard";
+import EditorCoursecard from "@/app/client/components/EditorCoursecard";
 
 export default function Course() {
   // --- ✨ Step 2: Add state for courses and filters ---
   const [courses, setCourses] = useState([]);
   const [filteredCourses, setFilteredCourses] = useState([]);
   const [schoolOptions, setSchoolOptions] = useState([]);
-  const [programmeOptions, setProgrammeOptions] =useState([]);
+  const [programmeOptions, setProgrammeOptions] = useState([]);
 
   // Filter state
   const [selectedSchool, setSelectedSchool] = useState("");
@@ -54,7 +54,7 @@ export default function Course() {
     if (selectedProgramme) {
       tempCourses = tempCourses.filter(course => course.program === selectedProgramme);
     }
-    
+
     setFilteredCourses(tempCourses);
   }, [selectedSchool, selectedProgramme, courses]);
 
@@ -67,7 +67,7 @@ export default function Course() {
       setSelectedProgramme("");
     }
   };
-  
+
   const handleProgrammeChange = (event) => {
     const newValue = event.target.value;
     setSelectedProgramme(newValue);
@@ -81,7 +81,7 @@ export default function Course() {
   return (
     <>
       <div className="pt-25 text-5xl p-6 flex flex-row justify-between mr-5 ">
-           My Courses
+        My Courses
       </div>
 
       {/* === ✨ NEW FILTER MENU BOXES === */}
@@ -116,26 +116,26 @@ export default function Course() {
             <MenuItem value="">
               <em>All Programmes</em>
             </MenuItem>
-             {programmeOptions.map((prog) => (
+            {programmeOptions.map((prog) => (
               <MenuItem key={prog} value={prog}>{prog}</MenuItem>
             ))}
           </Select>
         </FormControl>
       </Box>
       {/* ================================ */}
-      
+
       <div className="w-full text-black p-5">
         <Grid container spacing={3}>
           {/* ✨ Step 5: Map over the filteredCourses state */}
           {filteredCourses.map((item) => (
-               <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={item.course_id}>
+            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={item.course_id}>
               <EditorCoursecard
-                 id = {item.course_id}
-                courseId={item.course_code} 
-                Course={item.name} 
+                id={item.course_id}
+                courseId={item.course_code}
+                Course={item.name}
                 unitCount={item.unit_count}
                 topicCount={item.topic_count}
-               
+
               />
             </Grid>
           ))}

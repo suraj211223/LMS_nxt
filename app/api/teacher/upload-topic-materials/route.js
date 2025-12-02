@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import AdmZip from "adm-zip";
 
 const prisma = new PrismaClient();
 
@@ -10,13 +11,14 @@ export async function POST(req) {
         const form = await req.formData();
 
         const topicId = form.get("topicId");
+        const topicPrefix = form.get("topicPrefix"); // e.g. U1V1
         const pptFile = form.get("ppt");
         const courseMaterialFile = form.get("courseMaterial");
-        const referenceMaterialFile = form.get("referenceMaterial");
+        const referenceFiles = form.getAll("referenceMaterials"); // Get all files
 
-        if (!topicId) {
+        if (!topicId || isNaN(parseInt(topicId))) {
             return NextResponse.json(
-                { error: "Missing topicId" },
+                { error: "Invalid or missing topicId" },
                 { status: 400 }
             );
         }
@@ -34,15 +36,22 @@ export async function POST(req) {
             docFileData = Buffer.from(arrayBuffer);
         }
 
-        // Note: Schema has zipFileData, but UI sends referenceMaterial. 
-        // We'll map referenceMaterial to zipFileData for now, or just ignore if no field matches.
-        // The schema has: pptFileData, docFileData, zipFileData.
-        // Let's assume referenceMaterial goes to zipFileData or we just update what we can.
-
+        // Handle Reference Materials (Zip them)
         let zipFileData = null;
-        if (referenceMaterialFile && typeof referenceMaterialFile !== 'string') {
-            const arrayBuffer = await referenceMaterialFile.arrayBuffer();
-            zipFileData = Buffer.from(arrayBuffer);
+        if (referenceFiles && referenceFiles.length > 0) {
+            const zip = new AdmZip();
+
+            for (const file of referenceFiles) {
+                if (file && typeof file !== 'string') {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const buffer = Buffer.from(arrayBuffer);
+                    // Use original filename inside the zip
+                    zip.addFile(file.name, buffer);
+                }
+            }
+
+            // Create buffer from zip
+            zipFileData = zip.toBuffer();
         }
 
         // Upsert Contentscript
@@ -61,11 +70,6 @@ export async function POST(req) {
             },
         });
 
-        // Also update workflow status if needed? 
-        // The UI logic says "Scripting is complete" if status != planned.
-        // Maybe we should update status to "Scripted" or "Review"?
-        // Let's update to "Scripted" if it's currently "Planned".
-
         const topic = await prisma.contentItem.findUnique({
             where: { id: parseInt(topicId) },
             select: { workflowStatus: true }
@@ -74,7 +78,7 @@ export async function POST(req) {
         if (topic && topic.workflowStatus === 'Planned') {
             await prisma.contentItem.update({
                 where: { id: parseInt(topicId) },
-                data: { workflowStatus: 'Scripted' }
+                data: { workflowStatus: 'Editing' }
             });
         }
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { promises as fs } from "fs";
 import path from "path";
+import { cookies } from "next/headers";
 
 const prisma = new PrismaClient();
 
@@ -14,7 +15,15 @@ export async function GET(req) {
     const courseId = searchParams.get("courseId");
     const programId = searchParams.get("programId");
     const schoolId = searchParams.get("schoolId");
-    const userId = searchParams.get("userId");
+
+    const cookieStore = await cookies();
+    let userId = searchParams.get("userId") || cookieStore.get("userId")?.value;
+
+    // Validate userId
+    if (userId && isNaN(parseInt(userId))) {
+      console.warn(`Invalid userId received: ${userId}`);
+      userId = null;
+    }
 
     if (courseId) {
       const course = await prisma.course.findUnique({
@@ -25,7 +34,12 @@ export async function GET(req) {
           },
           sections: {
             include: {
-              contents: true,
+              contents: {
+                include: {
+                  contentscript: true,
+                },
+              },
+              materials: true,
             },
           },
         },
@@ -47,6 +61,9 @@ export async function GET(req) {
           section_id: section.id,
           name: section.title,
           order: section.orderIndex,
+          storagePath: section.storagePath,
+          pptFilename: section.pptFilename,
+          materials: section.materials,
           topics: section.contents.map((item) => ({
             id: `t${item.id}`,
             content_id: item.id,
@@ -54,6 +71,12 @@ export async function GET(req) {
             estimatedTime: item.estimatedDurationMin || 0,
             status: mapWorkflowStatus(item.workflowStatus),
             learning_objectives: item.learningObjectives,
+            videoLink: item.videoLink,
+            script: item.contentscript ? {
+              ppt: !!item.contentscript.pptFileData,
+              doc: !!item.contentscript.docFileData,
+              zip: !!item.contentscript.zipFileData,
+            } : null,
           })),
         })),
       };
@@ -61,13 +84,15 @@ export async function GET(req) {
       return NextResponse.json(courseData);
     }
 
+    if (!userId) {
+      return NextResponse.json({ courses: [] });
+    }
+
     const courses = await prisma.course.findMany({
       where: {
-        ...(userId && {
-          assignments: {
-            some: { userId: parseInt(userId) },
-          },
-        }),
+        assignments: {
+          some: { userId: parseInt(userId) },
+        },
         ...(programId && { programId: parseInt(programId) }),
         ...(schoolId && {
           program: { schoolId: parseInt(schoolId) },
@@ -109,9 +134,9 @@ function mapWorkflowStatus(dbStatus) {
     Planned: "planned",
     Scripted: "scripted",
     Editing: "editing",
-    "Post-Editing": "post-editing",
-    "Ready_for_Video_Prep": "ready",
-    "Under_Review": "review",
+    Post_Editing: "post-editing",
+    ReadyForVideoPrep: "ready_for_video_prep",
+    Under_Review: "under_review",
     Published: "published",
   };
 

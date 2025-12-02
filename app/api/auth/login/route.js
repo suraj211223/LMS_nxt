@@ -75,7 +75,7 @@ export async function POST(req) {
     // Decide dashboard
     let redirect = "/login";
 
-    if (roleName === "teacher") redirect = `/teachers/dashboard?userId=${user.id}`;
+    if (roleName === "teacher") redirect = "/teachers/dashboard";
     if (roleName === "admin") redirect = "/admin";
     if (roleName === "editor") redirect = "/editor/dashboard";
 
@@ -127,7 +127,7 @@ export async function POST(req) {
       }));
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       redirect,
       user: {
@@ -139,6 +139,15 @@ export async function POST(req) {
         assignedPrograms,
       },
     });
+
+    response.cookies.set("userId", String(user.id), {
+      path: "/",
+      httpOnly: true,
+      sameSite: "strict",
+      maxAge: 60 * 60 * 24 * 7, // 1 week
+    });
+
+    return response;
   } catch (err) {
     console.error("Login error:", err);
     return NextResponse.json(

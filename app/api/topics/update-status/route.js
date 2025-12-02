@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import prisma from "../../../../../lib/prisma";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export async function POST(request) {
   try {
@@ -9,12 +11,18 @@ export async function POST(request) {
       return new NextResponse("Missing topicId or newStatus", { status: 400 });
     }
 
-    const updatedTopic = await prisma.content.update({
+    // Map frontend status to DB enum if needed
+    let dbStatus = newStatus;
+    if (newStatus === "Post-Editing") dbStatus = "Post_Editing";
+    if (newStatus === "Ready_for_Video_Prep") dbStatus = "ReadyForVideoPrep";
+    if (newStatus === "Under_Review") dbStatus = "Under_Review";
+
+    const updatedTopic = await prisma.contentItem.update({
       where: {
-        content_id: topicId,
+        id: parseInt(topicId),
       },
       data: {
-        workflow_status: newStatus,
+        workflowStatus: dbStatus,
       },
     });
 

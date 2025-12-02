@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
   Accordion,
@@ -17,30 +17,29 @@ import {
   Chip,
   Paper,
 } from "@mui/material";
-import { Trash, FileCheck, CheckCircle } from "lucide-react";
+import { Trash, FileCheck, CheckCircle, PlayCircle, MessageSquare } from "lucide-react";
 import ProgressBar from "../../../../client/components/ProgressBar";
 import Createunitmodal from "../../../../client/components/Createunitmodal";
 import CreateTopicmodal from "../../../../client/components/CreateTopicmodal";
 import ScriptDialogue from "../../../../client/components/ScriptDialogue";
+import ReviewDialogue from "../../../../client/components/ReviewDialogue";
 
 export default function CourseStructureDesign() {
   const [course, setCourse] = useState(null);
   const [expandedUnit, setExpandedUnit] = useState(null);
   const params = useParams();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const userId = searchParams.get('userId');
 
   const [openUnitModal, setOpenUnitModal] = useState(false);
   const [openTopicModal, setOpenTopicModal] = useState(false);
   const [openScriptModal, setOpenScriptModal] = useState(false);
+  const [openReviewModal, setOpenReviewModal] = useState(false);
 
   const [currentUnitId, setCurrentUnitId] = useState(null);
   const [currentTopic, setCurrentTopic] = useState(null);
 
   const handleBack = () => {
-    const url = userId ? `/teachers/courses?userId=${userId}` : '/teachers/courses';
-    router.push(url);
+    router.push('/teachers/courses');
   };
 
   //  API FUNCTION to fetch course data
@@ -73,6 +72,29 @@ export default function CourseStructureDesign() {
     setOpenScriptModal(true);
   };
 
+  const handleOpenReviewModal = (topic) => {
+    setCurrentTopic(topic);
+    setOpenReviewModal(true);
+  };
+
+  const handleFeedbackSubmit = async (topicId, feedback) => {
+    try {
+      const res = await fetch("/api/teacher/submit-feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topicId, feedback }),
+      });
+
+      if (res.ok) {
+        fetchCourse(); // Refresh to show updated status
+      } else {
+        alert("Failed to submit feedback");
+      }
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
+    }
+  };
+
   const handleDeleteTopic = async (topicId, topicTitle) => {
     // Confirm deletion
     if (!window.confirm(`Are you sure you want to delete "${topicTitle}"? This action cannot be undone.`)) {
@@ -95,6 +117,29 @@ export default function CourseStructureDesign() {
     } catch (error) {
       console.error("Error deleting topic:", error);
       alert(`Error deleting topic: ${error.message}`);
+    }
+  };
+
+  const handleApprove = async (topicId) => {
+    try {
+      const res = await fetch(`/api/topics/update-status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          topicId: topicId,
+          newStatus: 'Published'
+        }),
+      });
+
+      if (res.ok) {
+        fetchCourse();
+      } else {
+        alert("Failed to approve topic");
+      }
+    } catch (error) {
+      console.error('Error approving topic:', error);
     }
   };
 
@@ -172,7 +217,7 @@ export default function CourseStructureDesign() {
 
                             // ✨ Logic for your button requirements
                             const isScriptingDone = topicStatus !== "planned";
-                            const isReviewStage = topicStatus === "review";
+                            const isReviewStage = topicStatus === "under_review"; // Updated to match DB
 
                             return (
                               <Paper
@@ -229,13 +274,28 @@ export default function CourseStructureDesign() {
                                         color: "text.secondary",
                                       }}
                                     >
-                                      {topicStatus}
+                                      {topicStatus.replace('_', ' ')}
                                     </Typography>
                                   </Box>
                                 </Box>
 
                                 {/* Topic Actions */}
                                 <Box sx={{ display: "flex" }}>
+                                  {topic.videoLink && (
+                                    <Tooltip title={topicStatus === "published" ? "Video Published" : "Watch & Review"}>
+                                      <span>
+                                        <IconButton
+                                          size="small"
+                                          color="primary"
+                                          onClick={() => handleOpenReviewModal(topic)}
+                                          disabled={topicStatus === "published"}
+                                        >
+                                          <MessageSquare />
+                                        </IconButton>
+                                      </span>
+                                    </Tooltip>
+                                  )}
+
                                   <Tooltip
                                     title={
                                       isScriptingDone
@@ -272,7 +332,7 @@ export default function CourseStructureDesign() {
                                       <IconButton
                                         size="small"
                                         disabled={!isReviewStage} // ✨ REQUIREMENT MET
-                                        // onClick={() => handleApprove(topic.id)}
+                                        onClick={() => handleApprove(topic.content_id)}
                                         color="success"
                                       >
                                         <CheckCircle />
@@ -341,8 +401,16 @@ export default function CourseStructureDesign() {
       <ScriptDialogue
         open={openScriptModal}
         onClose={() => setOpenScriptModal(false)}
-        topic={currentTopic} // ✨ Pass full topic object
-      // Note: You must update ScriptDialogue to accept and use this 'topic' prop
+        topic={currentTopic}
+        onUploadSuccess={fetchCourse}
+      />
+
+      <ReviewDialogue
+        open={openReviewModal}
+        onClose={() => setOpenReviewModal(false)}
+        topic={currentTopic}
+        onFeedbackSubmit={handleFeedbackSubmit}
+        onApprove={handleApprove}
       />
     </div>
   );

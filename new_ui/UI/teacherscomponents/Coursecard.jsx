@@ -9,13 +9,9 @@ import { BookOpen, Layers } from "lucide-react";
 const Coursecard = ({ id, courseId, Course, unitCount, topicCount }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const userId = searchParams.get('userId');
 
   const handleNavigate = () => {
-    const url = userId
-      ? `/teachers/courses/${id}?userId=${userId}`
-      : `/teachers/courses/${id}`;
-    router.push(url);
+    router.push(`/teachers/courses/${id}`);
   };
 
   return (

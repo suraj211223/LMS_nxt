@@ -1,13 +1,13 @@
 import React from "react";
 import { Grid, Typography, Box } from "@mui/material";
-import EditorProgramcard from "../../../../client/components/EditorProgramcard";
+import EditorProgramcard from "@/app/client/components/EditorProgramcard";
 
 async function Programs() {
   // Use the full URL for server-side fetch
-  const baseUrl = process.env.VERCEL_URL 
-    ? `https://${process.env.VERCEL_URL}` 
+  const baseUrl = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
     : 'http://localhost:3000';
-  
+
   const response = await fetch(`${baseUrl}/api/editor/programs`);
 
   if (!response.ok) {
@@ -27,7 +27,7 @@ async function Programs() {
           Browse all academic programs offered by the institution
         </Typography>
       </Box>
-      
+
       <div className="w-full text-black p-5">
         <Grid container spacing={3}>
           {programs.length > 0 ? (
@@ -38,7 +38,7 @@ async function Programs() {
                   programName={program.program_name}
                   programCode={program.program_code}
                   schoolName={program.school_name}
-                
+
                 />
               </Grid>
             ))

@@ -11,7 +11,6 @@ import StepConnector, {
 import Check from "@mui/icons-material/Check";
 
 /* ---------------------- Qonto Connector ---------------------- */
-// (This part is unchanged)
 const QontoConnector = styled(StepConnector)(({ theme }) => ({
   [`&.${stepConnectorClasses.alternativeLabel}`]: {
     top: 10,
@@ -39,7 +38,6 @@ const QontoConnector = styled(StepConnector)(({ theme }) => ({
 }));
 
 /* ---------------------- Qonto Icon ---------------------- */
-// (This part is unchanged)
 const QontoStepIconRoot = styled("div")(({ theme }) => ({
   color: "#eaeaf0",
   display: "flex",
@@ -93,40 +91,36 @@ QontoStepIcon.propTypes = {
 
 const ProgressBar = ({ status }) => {
   const steps = [
-    "planned",
-    "scripted",
-    "recorded",
-    "edited",
-    "uploaded",
+    "planning",
+    "editing",
     "review",
-    "approved",
     "published",
   ];
 
-  // --- ✨ UPDATED LOGIC ---
-  
-  const statusIndex = steps.indexOf(status?.toLowerCase());
-  let activeStep;
+  const statusLower = status?.toLowerCase();
+  let activeStep = 0;
 
-  if (statusIndex === 0) {
-    // If status is "planned", show "planned" as the active step (dot)
-    activeStep = 0;
-  } else if (statusIndex > 0) {
-    // If status is "scripted" (index 1) or higher,
-    // set the active step to be the *next* one (index 2)
-    // This will mark "scripted" as completed (✅)
-    activeStep = statusIndex+1 ;
+  if (statusLower === "planned") {
+    activeStep = 0; // Planning
+  } else if (
+    statusLower === "scripted" ||
+    statusLower === "editing" ||
+    statusLower === "post-editing" ||
+    statusLower === "ready_for_video_prep"
+  ) {
+    activeStep = 1; // Editing (covers Scripted -> Ready for Video)
+  } else if (statusLower === "under_review") {
+    activeStep = 2; // Review
+  } else if (statusLower === "published") {
+    activeStep = 3; // Published
   } else {
-    // Default for new topics (status is null, undefined, etc.)
-    // Show "planned" as the active step (dot)
-    activeStep = 0;
+    activeStep = 0; // Default
   }
-  // --- END OF UPDATED LOGIC ---
 
   return (
     <Stepper
       alternativeLabel
-      activeStep={activeStep} // Use the new calculated activeStep
+      activeStep={activeStep}
       connector={<QontoConnector />}
     >
       {steps.map((label, index) => (

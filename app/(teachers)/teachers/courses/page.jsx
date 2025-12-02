@@ -1,39 +1,31 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import TeacherCoursecard from '@/app/client/components/TeacherCoursecard';
 import { CircularProgress, Typography, Box, Grid } from '@mui/material';
 
 const Page = () => {
-    const searchParams = useSearchParams();
-    const userId = searchParams.get('userId');
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        if (userId) {
-            const fetchCourses = async () => {
-                try {
-                    const response = await fetch(`/api/teacher/display?userId=${userId}`);
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch courses');
-                    }
-                    const data = await response.json();
-                    setCourses(data.courses);
-                } catch (err) {
-                    setError(err.message);
-                } finally {
-                    setLoading(false);
+        const fetchCourses = async () => {
+            try {
+                const response = await fetch(`/api/teacher/display`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch courses');
                 }
-            };
-            fetchCourses();
-        } else {
-            setLoading(false);
-            setError("User ID not found in URL.");
-        }
-    }, [userId]);
+                const data = await response.json();
+                setCourses(data.courses);
+            } catch (err) {
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCourses();
+    }, []);
 
     if (loading) {
         return (
@@ -63,7 +55,6 @@ const Page = () => {
                             Course={course.name}
                             unitCount={course.unit_count}
                             topicCount={course.topic_count}
-                            userId={userId}
                         />
                     </Grid>
                 ))}

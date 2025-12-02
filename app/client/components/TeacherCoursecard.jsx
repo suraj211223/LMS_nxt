@@ -6,7 +6,7 @@ import { Card } from "@mui/material";
 import { BookOpen, Layers, Trash2 } from "lucide-react";
 
 
-const TeacherCoursecard = ({ id, courseId, Course, unitCount, topicCount, userId }) => {
+const TeacherCoursecard = ({ id, courseId, Course, unitCount, topicCount }) => {
   const router = useRouter();
   return (
     <Card className="h-full">
@@ -56,7 +56,7 @@ const TeacherCoursecard = ({ id, courseId, Course, unitCount, topicCount, userId
 
         {/* BUTTON AREA (Right Bottom) */}
         <div className="flex justify-end mt-4">
-          <button className="rounded-lg text-white bg-gray-800 py-2 px-2 w-30 text-center" onClick={() => router.push(`/teachers/courses/${id}?userId=${userId}`)}>
+          <button className="rounded-lg text-white bg-gray-800 py-2 px-2 w-30 text-center" onClick={() => router.push(`/teachers/courses/${id}`)}>
             Learn More
           </button>
         </div>

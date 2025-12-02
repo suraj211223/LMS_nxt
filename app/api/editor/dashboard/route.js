@@ -1,26 +1,29 @@
 import { NextResponse } from "next/server";
-import prisma from "../../../../../lib/prisma";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export async function GET() {
   try {
-    const totalTopics = await prisma.content.count();
-    const published = await prisma.content.count({ where: { workflow_status: "Published" } });
-    const inEditing = await prisma.content.count({ where: { workflow_status: "Editing" } });
-    const underReview = await prisma.content.count({ where: { workflow_status: "Under_Review" } });
-    const readyForVideo = await prisma.content.count({ where: { workflow_status: "Ready_for_Video_Prep" } });
+    // 1. Fetch counts
+    const totalTopics = await prisma.contentItem.count();
+    const published = await prisma.contentItem.count({ where: { workflowStatus: "Published" } });
+    const inEditing = await prisma.contentItem.count({ where: { workflowStatus: "Editing" } });
+    const scripted = await prisma.contentItem.count({ where: { workflowStatus: "Scripted" } });
+    const underReview = await prisma.contentItem.count({ where: { workflowStatus: "Under_Review" } });
+    const readyForVideo = await prisma.contentItem.count({ where: { workflowStatus: "ReadyForVideoPrep" } });
 
-    const topicsInProgress = await prisma.content.findMany({
+    // 2. Fetch topics in progress (not Published)
+    const topicsInProgress = await prisma.contentItem.findMany({
       where: {
-        workflow_status: {
-          not: "Published",
-        },
+        // Fetch all topics so we can show Published ones too if needed
       },
       include: {
-        units: {
+        section: {
           include: {
-            courses: {
+            course: {
               include: {
-                programs: true,
+                program: true,
               },
             },
           },
@@ -28,14 +31,28 @@ export async function GET() {
       },
     });
 
+    // Helper to map DB status to Frontend status
+    const mapStatus = (status) => {
+      const map = {
+        "Post_Editing": "Post-Editing",
+        "ReadyForVideoPrep": "Ready_for_Video_Prep",
+        "Under_Review": "Under_Review",
+        "Published": "Published"
+      };
+      return map[status] || status;
+    };
+
+    // 3. Format data
     const formattedTopics = topicsInProgress.map((topic) => ({
-      content_id: topic.content_id,
-      topic_title: topic.name,
-      workflow_status: topic.workflow_status,
-      estimated_duration_min: topic.estimated_duration,
-      course_title: topic.units.courses.name,
-      unit_title: topic.units.name,
-      program_name: topic.units.courses.programs.program_name,
+      content_id: topic.id,
+      topic_title: topic.title,
+      workflow_status: mapStatus(topic.workflowStatus),
+      estimated_duration_min: topic.estimatedDurationMin,
+      course_title: topic.section?.course?.title || "Unknown Course",
+      unit_title: topic.section?.title || "Unknown Unit",
+      program_name: topic.section?.course?.program?.programName || "Unknown Program",
+      video_link: topic.videoLink,
+      review_notes: topic.reviewNotes,
     }));
 
     return NextResponse.json({
@@ -43,6 +60,7 @@ export async function GET() {
         totalTopics,
         published,
         inEditing,
+        scripted,
         underReview,
         readyForVideo,
       },
