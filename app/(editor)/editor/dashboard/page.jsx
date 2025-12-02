@@ -100,7 +100,7 @@ const EditorDash = () => {
         body: JSON.stringify({
           topicId: currentTopic.content_id,
           videoLink: videoLink,
-          newStatus: 'Ready_for_Video_Prep'
+          newStatus: 'Under_Review'
         }),
       });
 

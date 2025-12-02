@@ -13,7 +13,7 @@ export async function POST(request) {
 
     // Map frontend status to DB enum if needed
     let dbStatus = newStatus;
-    if (newStatus === "Post-Editing") dbStatus = "Under_Review";
+    if (newStatus === "Post-Editing") dbStatus = "Post_Editing";
     if (newStatus === "Ready_for_Video_Prep") dbStatus = "ReadyForVideoPrep";
     if (newStatus === "Under_Review") dbStatus = "Under_Review";
 

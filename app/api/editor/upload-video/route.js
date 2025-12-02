@@ -26,7 +26,7 @@ export async function POST(req) {
         // Map frontend status to DB enum keys
         let dbStatus = newStatus;
         if (newStatus === "Ready_for_Video_Prep") dbStatus = "ReadyForVideoPrep";
-        if (newStatus === "Post-Editing") dbStatus = "Under_Review";
+        if (newStatus === "Post-Editing") dbStatus = "Post_Editing";
         // Under_Review is the same for both
 
         console.log(`Updating topic ${id} with videoLink: ${videoLink} and status: ${dbStatus}`);

@@ -40,7 +40,7 @@ export async function GET() {
     // Helper to map DB status to Frontend status
     const mapStatus = (status) => {
       const map = {
-        "Post_Editing": "Under_Review",
+        "Post_Editing": "Ready_for_Video_Prep",
         "ReadyForVideoPrep": "Ready_for_Video_Prep",
         "Under_Review": "Under_Review",
         "Published": "Published"
