@@ -19,6 +19,35 @@ const Nav = () => {
   };
 
   const router = useRouter();
+  const [userName, setUserName] = useState('User');
+
+  // Load persisted user (if any) so the drawer shows the real name
+  React.useEffect(() => {
+    try {
+      const raw = localStorage.getItem('lms_user');
+      if (raw) {
+        const user = JSON.parse(raw);
+        if (user?.name) setUserName(user.name);
+      }
+    } catch (err) {
+      // ignore
+    }
+  }, []);
+
+  function signOut() {
+    try {
+      // clear persisted user data
+      localStorage.removeItem('lms_user');
+      // optionally clear other tokens
+      localStorage.removeItem('lms_token');
+    } catch (err) {
+      console.warn('Failed to clear localStorage during sign out', err);
+    }
+
+    // do a hard redirect to ensure all client state + app cache is cleared
+    // (router.push + reload previously caused inconsistencies on some clients)
+    window.location.href = '/login';
+  }
   return (
     <>
       <AppBar position="fixed">
@@ -51,7 +80,7 @@ const Nav = () => {
                 className="w-20 h-20 rounded-full shadow-md"
                 src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse4.mm.bing.net%2Fth%2Fid%2FOIP.jixXH_Els1MXBRmKFdMQPAHaHa%3Fcb%3Ducfimg2%26pid%3DApi%26ucfimg%3D1&f=1&ipt=5f2c9482b3203216f66634e457db5adab9cbfcd1542e6d9ac338fae4e0abf505&ipo=images"
               />
-              <p className="py-2 text-2xl font-semibold">Hi User</p>
+              <p className="py-2 text-2xl font-semibold">Hi {userName}</p>
             </div>
 
             {/* Menu Buttons */}
@@ -91,7 +120,7 @@ const Nav = () => {
 
           {/* SIGN OUT BUTTON AT BOTTOM */}
           <div className="mt-auto">
-            <button className="flex items-center gap-2 rounded-xl px-3 py-2 text-red-500 hover:bg-red-100 transition-all duration-200">
+            <button onClick={signOut} className="flex items-center gap-2 rounded-xl px-3 py-2 text-red-500 hover:bg-red-100 transition-all duration-200">
               <LogOut size={20} /> Sign Out
             </button>
           </div>

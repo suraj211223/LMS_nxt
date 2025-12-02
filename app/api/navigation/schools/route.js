@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
-import { pool } from "../../../../lib/db";
+import prisma from "../../../../lib/prisma";
 
 export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    const [rows] = await pool.query("SELECT school_id, school_name FROM Schools");
-    return NextResponse.json(rows);
+    const schools = await prisma.schools.findMany({
+      select: {
+        school_id: true,
+        school_name: true,
+      },
+    });
+    return NextResponse.json(schools);
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

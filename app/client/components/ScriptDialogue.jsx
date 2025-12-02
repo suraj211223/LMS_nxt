@@ -45,7 +45,7 @@ const ScriptDialogue = ({ open, onClose, topic }) => {
     formData.append("topicPrefix", topicPrefix);
 
     try {
-      const response = await fetch("______", { // <---API route
+      const response = await fetch("/api/teacher/upload-topic-materials", {
         method: "POST",
         body: formData,
       });
@@ -65,11 +65,10 @@ const ScriptDialogue = ({ open, onClose, topic }) => {
       onClose={onClose}
       fullWidth
       maxWidth="sm"
-    
       slotProps={{
         backdrop: {
           style: {
-            backgroundColor: "rgba(0, 0, 0, 0.1)", 
+            backgroundColor: "rgba(0, 0, 0, 0.1)",
             backdropFilter: "blur(4px)",
           },
         },

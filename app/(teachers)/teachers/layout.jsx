@@ -1,12 +1,15 @@
+"use client"
 import React from 'react'
-import Nav from "../../client/components/Navbar"
+import Nav from "@/new_ui/UI/teacherscomponents/Navbar"
+import { useSearchParams } from 'next/navigation'
+
 export default function Layout({ children }) {
   return (
-    <html lang="en">
-      <body>
-         <Nav/>
+    <>
+      <Nav />
+      <main className="pt-16">
         {children}
-      </body>
-    </html>
+      </main>
+    </>
   );
 }

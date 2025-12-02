@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
   Accordion,
@@ -12,10 +12,10 @@ import {
   CardHeader,
   Box,
   Tooltip,
-  IconButton, 
+  IconButton,
   Typography,
-  Chip,      
-  Paper,      
+  Chip,
+  Paper,
 } from "@mui/material";
 import { Trash, FileCheck, CheckCircle } from "lucide-react";
 import ProgressBar from "../../../../client/components/ProgressBar";
@@ -27,15 +27,21 @@ export default function CourseStructureDesign() {
   const [course, setCourse] = useState(null);
   const [expandedUnit, setExpandedUnit] = useState(null);
   const params = useParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const userId = searchParams.get('userId');
 
-  
   const [openUnitModal, setOpenUnitModal] = useState(false);
   const [openTopicModal, setOpenTopicModal] = useState(false);
   const [openScriptModal, setOpenScriptModal] = useState(false);
 
-  
-  const [currentUnitId, setCurrentUnitId] = useState(null); 
-  const [currentTopic, setCurrentTopic] = useState(null); 
+  const [currentUnitId, setCurrentUnitId] = useState(null);
+  const [currentTopic, setCurrentTopic] = useState(null);
+
+  const handleBack = () => {
+    const url = userId ? `/teachers/courses?userId=${userId}` : '/teachers/courses';
+    router.push(url);
+  };
 
   //  API FUNCTION to fetch course data
   const fetchCourse = async () => {
@@ -57,14 +63,12 @@ export default function CourseStructureDesign() {
     }
   }, [params.id]);
 
-  
   const handleOpenTopicModal = (unitId) => {
     setCurrentUnitId(unitId); // Set context
     setOpenTopicModal(true);
   };
 
   const handleOpenScriptModal = (topic, unitIndex, topicIndex) => {
-  
     setCurrentTopic({ ...topic, unitIndex, topicIndex });
     setOpenScriptModal(true);
   };
@@ -87,7 +91,7 @@ export default function CourseStructureDesign() {
 
       // Refresh the course data to show the updated list
       fetchCourse();
-      
+
     } catch (error) {
       console.error("Error deleting topic:", error);
       alert(`Error deleting topic: ${error.message}`);
@@ -104,7 +108,7 @@ export default function CourseStructureDesign() {
     <div className="space-y-6 p-6">
       {/* Header */}
       <div>
-        <Button variant="outlined">← Back to Courses</Button>
+        <Button variant="outlined" onClick={handleBack}>← Back to Courses</Button>
       </div>
 
       {/* Course Info */}
@@ -115,11 +119,9 @@ export default function CourseStructureDesign() {
               {course.name || course.course_name}
             </span>
           }
-          subheader={`${course.department || "Department"} • ${
-            course.program || "Program"
-          } • ${course.units ? course.units.length : 0} units • ${
-            getAllTopics().length
-          } topics`}
+          subheader={`${course.department || "Department"} • ${course.program || "Program"
+            } • ${course.units ? course.units.length : 0} units • ${getAllTopics().length
+            } topics`}
         />
       </Card>
 
@@ -167,7 +169,7 @@ export default function CourseStructureDesign() {
                           unit.topics.map((topic, topicIndex) => {
                             const topicStatus =
                               topic.status?.toLowerCase() || "planned";
-                            
+
                             // ✨ Logic for your button requirements
                             const isScriptingDone = topicStatus !== "planned";
                             const isReviewStage = topicStatus === "review";
@@ -205,11 +207,10 @@ export default function CourseStructureDesign() {
                                     {topic.name}
                                   </Typography>
                                   <Chip
-                                    label={`${
-                                      topic.estimatedTime ||
+                                    label={`${topic.estimatedTime ||
                                       topic.estimated_duration_min ||
                                       0
-                                    } min`}
+                                      } min`}
                                     size="small"
                                     sx={{ bgcolor: "grey.200" }}
                                   />
@@ -316,7 +317,7 @@ export default function CourseStructureDesign() {
             <Button
               variant="outlined"
               className="w-full"
-              onClick={() => setOpenUnitModal(true)} 
+              onClick={() => setOpenUnitModal(true)}
             >
               + Add Unit
             </Button>
@@ -324,7 +325,6 @@ export default function CourseStructureDesign() {
         </CardContent>
       </Card>
 
-     
       <Createunitmodal
         open={openUnitModal}
         onClose={() => setOpenUnitModal(false)}
@@ -335,14 +335,14 @@ export default function CourseStructureDesign() {
         open={openTopicModal}
         onClose={() => setOpenTopicModal(false)}
         unitId={currentUnitId} // ✨ Pass unitId
-        // Note: You must update CreateTopicmodal to accept and use this 'unitId' prop
+      // Note: You must update CreateTopicmodal to accept and use this 'unitId' prop
       />
 
       <ScriptDialogue
         open={openScriptModal}
         onClose={() => setOpenScriptModal(false)}
         topic={currentTopic} // ✨ Pass full topic object
-        // Note: You must update ScriptDialogue to accept and use this 'topic' prop
+      // Note: You must update ScriptDialogue to accept and use this 'topic' prop
       />
     </div>
   );

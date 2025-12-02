@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
-import { pool } from "../../../lib/db";
+import prisma from "../../../lib/prisma";
 
 export async function GET() {
   try {
     // Test database connection and check tables
-    const [tables] = await pool.query("SHOW TABLES");
+    const tables = await prisma.$queryRaw`SHOW TABLES`;
     console.log("Database tables:", tables);
     
-    const [courses] = await pool.query("SELECT * FROM Courses LIMIT 5");
+    const courses = await prisma.course.findMany({
+      take: 5,
+    });
     console.log("Sample courses:", courses);
     
     return NextResponse.json({

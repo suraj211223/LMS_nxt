@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
-import { pool } from "../../../../lib/db";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export const runtime = "nodejs";
+//...
 
 export async function POST(req) {
   try {
@@ -16,18 +19,20 @@ export async function POST(req) {
     }
 
     // Insert the new topic into the database
-    const [result] = await pool.query(
-      `INSERT INTO contentitems (section_id, title, estimated_duration_min, workflow_status) 
-       VALUES (?, ?, ?, 'Planned')`,
-      [unitId, topicName, parseInt(duration) || 0]
-    );
+    const result = await prisma.contentItem.create({
+      data: {
+        sectionId: parseInt(unitId),
+        title: topicName,
+        estimatedDurationMin: parseInt(duration) || 0,
+        workflowStatus: "Planned",
+      },
+    });
 
     return NextResponse.json({
       success: true,
-      topicId: result.insertId,
-      message: "Topic created successfully"
+      topicId: result.id,
+      message: "Topic created successfully",
     });
-
   } catch (error) {
     console.error("Error creating topic:", error);
     return NextResponse.json(

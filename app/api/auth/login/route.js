@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { pool } from "../../../../lib/db";
+import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
+
+const prisma = new PrismaClient();
 
 export async function POST(req) {
   try {
@@ -7,54 +10,140 @@ export async function POST(req) {
 
     // Validate input
     if (!email || !password) {
-      return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Email and password are required" },
+        { status: 400 }
+      );
     }
 
-    const [rows] = await pool.query(
-      "SELECT user_id, role_id, password_hash, first_name, last_name FROM Users WHERE email = ?",
-      [email]
-    );
-
-    if (!rows.length) {
-      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
-    }
-
-    const user = rows[0];
-
-    // For demo purposes, checking against plain text password 'dummy'
-    // In production, you should use bcrypt to hash and compare passwords
-    if (user.password_hash !== password) {
-      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
-    }
-
-    //fetches role name
-    const [roles] = await pool.query(
-      "SELECT role_name FROM Roles WHERE role_id = ?",
-      [user.role_id]
-    );
-
-    const role = roles[0].role_name.toLowerCase(); // Convert to lowercase for comparison
-
-    //decides dashboard
-    let redirect = "/login";
-
-    if (role === "teacher") redirect = "/teachers/courses";
-    if (role === "admin") redirect = "/admin/dashboard";
-    if (role === "editor") redirect = "/editor/dashboard";
-
-    return NextResponse.json({ 
-      success: true, 
-      redirect,
-      user: {
-        id: user.user_id,
-        email: email,
-        name: `${user.first_name} ${user.last_name}`,
-        role: role
-      }
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        roleId: true,
+        passwordHash: true,
+        firstName: true,
+        lastName: true,
+      },
     });
 
+    if (!user) {
+      return NextResponse.json(
+        { error: "Invalid email or password" },
+        { status: 401 }
+      );
+    }
+
+    // Login policy:
+    // - Prefer bcrypt compare (seed script writes BCrypt hashes)
+    // - For backward compatibility with demo plaintext entries use a fallback
+    let passwordMatch = false;
+    try {
+      // If password_hash looks like a bcrypt hash, try comparing
+      if (
+        typeof user.passwordHash === "string" &&
+        user.passwordHash.startsWith("$2")
+      ) {
+        passwordMatch = await bcrypt.compare(password, user.passwordHash);
+      } else {
+        // fallback: some sample/dump data stores 'dummy' in plaintext
+        passwordMatch = user.passwordHash === password;
+      }
+    } catch (err) {
+      console.warn(
+        "password compare failed, falling back to direct comparison",
+        err
+      );
+      passwordMatch = user.passwordHash === password;
+    }
+
+    if (!passwordMatch) {
+      return NextResponse.json(
+        { error: "Invalid email or password" },
+        { status: 401 }
+      );
+    }
+
+    // Fetch role name
+    const role = await prisma.role.findUnique({
+      where: { id: user.roleId },
+      select: { roleName: true },
+    });
+
+    const roleName = role?.roleName.toLowerCase(); // Convert to lowercase for comparison
+
+    // Decide dashboard
+    let redirect = "/login";
+
+    if (roleName === "teacher") redirect = `/teachers/dashboard?userId=${user.id}`;
+    if (roleName === "admin") redirect = "/admin";
+    if (roleName === "editor") redirect = "/editor/dashboard";
+
+    // If teacher, fetch only their assigned courses and include in response
+    let assignedCourses = [];
+    let assignedPrograms = [];
+    if (roleName === "teacher") {
+      const courses = await prisma.course.findMany({
+        where: {
+          assignments: {
+            some: { userId: user.id },
+          },
+        },
+        select: {
+          id: true,
+          title: true,
+          courseCode: true,
+        },
+      });
+
+      assignedCourses = courses.map((course) => ({
+        id: course.id,
+        title: course.title,
+        courseCode: course.courseCode,
+      }));
+
+      const programs = await prisma.program.findMany({
+        where: {
+          courses: {
+            some: {
+              assignments: {
+                some: { userId: user.id },
+              },
+            },
+          },
+        },
+        distinct: ["id"],
+        select: {
+          id: true,
+          programName: true,
+          programCode: true,
+        },
+      });
+
+      assignedPrograms = programs.map((program) => ({
+        id: program.id,
+        name: program.programName,
+        code: program.programCode,
+      }));
+    }
+
+    return NextResponse.json({
+      success: true,
+      redirect,
+      user: {
+        id: user.id,
+        email,
+        name: `${user.firstName} ${user.lastName}`,
+        role: roleName,
+        assignedCourses,
+        assignedPrograms,
+      },
+    });
   } catch (err) {
     console.error("Login error:", err);
-    return NextResponse.json({ error: "Login failed. Please try again." }, { status: 500 });
+    return NextResponse.json(
+      { error: "Login failed. Please try again." },
+      { status: 500 }
+    );
   }
 }

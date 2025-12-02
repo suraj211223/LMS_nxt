@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { pool } from "../../../../../lib/db";
+import prisma from "../../../../../../../lib/prisma";
 
 export async function POST(req) {
   try {
@@ -13,15 +13,18 @@ export async function POST(req) {
       );
     }
 
-    const [result] = await pool.query(
-      `INSERT INTO Courses (program_id, title, course_code, status)
-       VALUES (?, ?, ?, ?)`,
-      [program_id, title, course_code, status || "Active"]
-    );
+    const course = await prisma.course.create({
+      data: {
+        programId: program_id,
+        title: title,
+        courseCode: course_code,
+        status: status || "Active",
+      },
+    });
 
     return NextResponse.json({
       success: true,
-      course_id: result.insertId,
+      course_id: course.id,
     });
 
   } catch (err) {

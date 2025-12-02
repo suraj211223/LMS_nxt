@@ -1,20 +1,23 @@
 import { NextResponse } from "next/server";
-import { pool } from "../../../../../../lib/db";
+import prisma from "../../../../../../lib/prisma";
 
 export const runtime = "nodejs";
 
 export async function GET(req, { params }) {
-  const { program_id } = await params;
+  const { program_id } = params;
 
   try {
-    const [rows] = await pool.query(
-      `SELECT course_id, title AS course_name, course_code, status
-       FROM Courses
-       WHERE program_id = ?`,
-      [program_id]
-    );
+    const courses = await prisma.courses.findMany({
+      where: { program_id: parseInt(program_id) },
+      select: {
+        course_id: true,
+        title: true,
+        course_code: true,
+        status: true,
+      },
+    });
 
-    return NextResponse.json(rows);
+    return NextResponse.json(courses);
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

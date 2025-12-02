@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { pool } from "../../../../../lib/db";
+import prisma from "../../../../../../lib/prisma";
 
 export async function POST(req) {
   try {
@@ -13,11 +13,11 @@ export async function POST(req) {
     }
 
     //insert school
-    await pool.query(
-      `INSERT INTO Schools (school_name) VALUES (?) 
-       ON DUPLICATE KEY UPDATE school_name = school_name`,
-      [schoolName]
-    );
+    await prisma.school.create({
+      data: {
+        name: schoolName,
+      },
+    });
 
     return NextResponse.json({
       success: true,
@@ -25,6 +25,13 @@ export async function POST(req) {
     });
   } catch (err) {
     console.error("Admin Create School Error:", err);
+    // Check for unique constraint violation
+    if (err.code === "P2002" && err.meta?.target?.includes("name")) {
+      return NextResponse.json(
+        { error: "School with this name already exists" },
+        { status: 409 } // 409 Conflict
+      );
+    }
     return NextResponse.json(
       { error: "Internal Server Error", details: String(err) },
       { status: 500 }

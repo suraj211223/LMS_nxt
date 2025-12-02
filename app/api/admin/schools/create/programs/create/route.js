@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import { pool } from "../../../../../lib/db";
+import prisma from "../../../../../../../lib/prisma";
 
 export async function POST(req) {
   try {
     const { school_id, program_name, program_code } = await req.json();
 
-    //basic validation
     if (!school_id || !program_name || !program_code) {
       return NextResponse.json(
         { error: "school_id, program_name, and program_code are required" },
@@ -13,26 +12,24 @@ export async function POST(req) {
       );
     }
 
-    //verify school
-    const [schoolRows] = await pool.query(
-      "SELECT school_id FROM Schools WHERE school_id = ?",
-      [school_id]
-    );
+    const school = await prisma.school.findUnique({
+      where: { id: school_id },
+    });
 
-    if (schoolRows.length === 0) {
+    if (!school) {
       return NextResponse.json(
         { error: "Invalid school_id: school does not exist" },
         { status: 404 }
       );
     }
 
-    //insert Program (duplicate-safe)
-    await pool.query(
-      `INSERT INTO Programs (school_id, program_name, program_code)
-       VALUES (?, ?, ?)
-       ON DUPLICATE KEY UPDATE program_name = program_name`,
-      [school_id, program_name, program_code]
-    );
+    await prisma.program.create({
+      data: {
+        schoolId: school_id,
+        programName: program_name,
+        programCode: program_code,
+      },
+    });
 
     return NextResponse.json({
       success: true,
@@ -40,6 +37,12 @@ export async function POST(req) {
     });
   } catch (err) {
     console.error("Admin Create Program Error:", err);
+    if (err.code === "P2002" && err.meta?.target?.includes("programCode")) {
+      return NextResponse.json(
+        { error: "A program with this code already exists" },
+        { status: 409 }
+      );
+    }
     return NextResponse.json(
       { error: "Internal Server Error", details: String(err) },
       { status: 500 }

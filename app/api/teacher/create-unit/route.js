@@ -1,24 +1,19 @@
 import { NextResponse } from "next/server";
-import { pool } from "../../../../lib/db";
-import { promises as fs } from "fs";
-import path from "path";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export const runtime = "nodejs";
-
-//to prevent folder name issues on Windows/Linux
-const SAFE = (s = "") => String(s).replace(/[\/\\:?<>|"]/g, "-");
 
 export async function POST(req) {
   try {
     const form = await req.formData();
 
-    //these are required fields
     const course_id = form.get("course_id");
     const unit_title = form.get("unit_title");
     const unit_code = form.get("unit_code");
     const prof_name = form.get("prof_name");
 
-    //optional files uploads
     const pptFile = form.get("ppt");
     const materialsFile = form.get("materials");
 
@@ -29,112 +24,77 @@ export async function POST(req) {
       );
     }
 
-    //fetch course details for folder naming
-    const [courseRows] = await pool.query(
-      `SELECT title, course_code 
-       FROM Courses 
-       WHERE course_id = ?`,
-      [course_id]
-    );
+    // Ensure the course exists
+    const course = await prisma.course.findUnique({
+      where: { id: parseInt(course_id) },
+    });
 
-    if (!courseRows.length) {
+    if (!course) {
       return NextResponse.json(
         { error: "Course not found" },
         { status: 404 }
       );
     }
 
-    const courseTitle = SAFE(courseRows[0].title);
-    const courseCode = SAFE(courseRows[0].course_code);
-
-    //building directory structure
-    //base storage folder from .env.local
-    const base = process.env.STORAGE_BASE;
-
-    if (!base) {
-      return NextResponse.json(
-        { error: "Missing STORAGE_BASE in environment" },
-        { status: 500 }
-      );
-    }
-
-    // folder structure:
-    // STORAGE_BASE / Courses / COURSECODE - COURSENAME / UNITCODE - TITLE - PROF
-    const courseFolder = SAFE(`${courseCode} - ${courseTitle}`);
-    const unitFolder = SAFE(`${unit_code} - ${unit_title} - ${prof_name}`);
-
-    const fullPath = path.join(base, courseFolder, unitFolder);
-
-    await fs.mkdir(fullPath, { recursive: true });
-    await fs.mkdir(path.join(fullPath, "Materials"), { recursive: true });
-
     // Calculate the next order_index for the new unit
-    const [orderResult] = await pool.query(
-      `SELECT COALESCE(MAX(order_index), 0) + 1 as next_order FROM CourseSections WHERE course_id = ?`,
-      [course_id]
-    );
-    const nextOrderIndex = orderResult[0].next_order;
+    const nextOrderIndex = await prisma.courseSection.aggregate({
+      where: { courseId: parseInt(course_id) },
+      _max: { orderIndex: true },
+    });
 
-    //optional: save PPT
-    let pptFilename = null;
+    const orderIndex = (nextOrderIndex._max.orderIndex || 0) + 1;
 
-    if (pptFile && pptFile.name) {
+    // Ensure section exists or create it
+    const section = await prisma.courseSection.upsert({
+      where: { courseId_title: { courseId: parseInt(course_id), title: unit_title } },
+      update: { orderIndex: orderIndex, unitCode: unit_code, profName: prof_name },
+      create: {
+        courseId: parseInt(course_id),
+        title: unit_title,
+        orderIndex: orderIndex,
+        unitCode: unit_code,
+        profName: prof_name,
+      },
+    });
+
+    // Ensure content exists or create it
+    const content = await prisma.contentItem.upsert({
+      where: { sectionId_title: { sectionId: section.id, title: unit_title } },
+      update: {},
+      create: {
+        sectionId: section.id,
+        title: unit_title,
+        workflowStatus: "Planned",
+      },
+    });
+
+    let pptFileData = null;
+    if (pptFile) {
       const arrayBuffer = await pptFile.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-
-      pptFilename = `${unitFolder}${path.extname(pptFile.name)}`;
-      await fs.writeFile(path.join(fullPath, pptFilename), buffer);
+      pptFileData = Buffer.from(arrayBuffer);
     }
 
-    // --------- DB INSERT: COURSESECTIONS ----------
-    const [insertResult] = await pool.query(
-      `INSERT INTO CourseSections 
-       (course_id, title, order_index, unit_code, prof_name, storage_path, ppt_filename)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [
-        course_id,
-        unit_title,
-        nextOrderIndex,
-        unit_code,
-        prof_name,
-        fullPath,
-        pptFilename,
-      ]
-    );
-
-    const section_id = insertResult.insertId;
-
-    // --------- OPTIONAL: SAVE MATERIAL ----------
-    if (materialsFile && materialsFile.name) {
+    let materialsFileData = null;
+    if (materialsFile) {
       const arrayBuffer = await materialsFile.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-
-      const filename = SAFE(materialsFile.name);
-      const filePath = path.join(fullPath, "Materials", filename);
-
-      await fs.writeFile(filePath, buffer);
-
-      await pool.query(
-        `INSERT INTO UnitMaterials 
-         (section_id, filename, file_path, file_type, uploaded_by)
-         VALUES (?, ?, ?, ?, ?)`,
-        [
-          section_id,
-          filename,
-          filePath,
-          path.extname(filename),
-          null   // uploaded_by will be null until you implement login
-        ]
-      );
+      materialsFileData = Buffer.from(arrayBuffer);
     }
+
+    // Insert into contentscripts
+    await prisma.contentscript.create({
+      data: {
+        contentId: content.id,
+        pptFileData: pptFileData,
+        docFileData: materialsFileData,
+        introductionScript: unit_title,
+        instructionsForEditor: prof_name,
+      },
+    });
 
     return NextResponse.json({
       success: true,
-      message: "Unit created successfully",
-      folder: fullPath,
-      section_id,
+      message: "Unit created and files stored successfully",
     });
-
   } catch (err) {
     console.error("create-unit route error:", err);
     return NextResponse.json(

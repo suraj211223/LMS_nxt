@@ -1,0 +1,197 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums used in the database
+enum CourseStatus {
+  Draft
+  Active
+  Archived
+}
+
+enum WorkflowStatus {
+  Planned
+  Scripted
+  Editing
+  Post_Editing  @map("Post-Editing")
+  ReadyForVideoPrep @map("Ready_for_Video_Prep")
+  Under_Review  @map("Under_Review")
+  Published
+}
+
+// -----------------------------
+// Prisma models mapped to MySQL
+// -----------------------------
+
+model School {
+  id   Int     @id @default(autoincrement()) @map("school_id")
+  name String  @unique @map("school_name")
+
+  programs Program[]
+
+  @@map("schools")
+}
+
+model Program {
+  id          Int     @id @default(autoincrement()) @map("program_id")
+  schoolId    Int     @map("school_id")
+  programName String  @map("program_name")
+  programCode String? @unique @map("program_code")
+
+  school School @relation(fields: [schoolId], references: [id])
+  courses Course[]
+
+  @@map("programs")
+}
+
+model Role {
+  id                Int     @id @default(autoincrement()) @map("role_id")
+  roleName          String  @unique @map("role_name")
+  canEditCourses    Boolean @default(false) @map("can_edit_courses")
+  canManageSystem   Boolean @default(false) @map("can_manage_system")
+  canUploadContent  Boolean @default(false) @map("can_upload_content")
+
+  users User[]
+
+  @@map("roles")
+}
+
+model User {
+  id           Int     @id @default(autoincrement()) @map("user_id")
+  roleId       Int     @map("role_id")
+  email        String  @unique @map("email")
+  passwordHash String  @map("password_hash")
+  firstName    String? @map("first_name")
+  lastName     String? @map("last_name")
+
+  role Role @relation(fields: [roleId], references: [id])
+
+  // relations
+  uploadedMaterials UnitMaterial[] @relation("uploadedMaterials")
+  uploadedContentByEditor ContentItem[] @relation("uploadedByEditor")
+  assignedCourses UserCourseAssignment[]
+
+  @@map("users")
+}
+
+model Course {
+  id              Int       @id @default(autoincrement()) @map("course_id")
+  programId       Int       @map("program_id")
+  title           String
+  courseCode      String    @unique @map("course_code")
+  status          CourseStatus @default(Active)
+  contentFolderUrl String?   @map("content_folder_url")
+
+  program Program @relation(fields: [programId], references: [id])
+  sections CourseSection[]
+  semesters CourseSemester[]
+  assignments UserCourseAssignment[]
+
+  @@map("courses")
+}
+
+model CourseSection {
+  id          Int     @id @default(autoincrement()) @map("section_id")
+  courseId    Int     @map("course_id")
+  title       String
+  orderIndex  Int     @map("order_index")
+  unitCode    String? @map("unit_code")
+  profName    String? @map("prof_name")
+  storagePath String? @map("storage_path")
+  pptFilename String? @map("ppt_filename")
+  workflowStatus WorkflowStatus @default(Planned) @map("workflow_status")
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  contents ContentItem[]
+  materials UnitMaterial[]
+
+  @@unique([courseId, title])
+  @@map("coursesections")
+}
+
+model UnitMaterial {
+  id         Int      @id @default(autoincrement()) @map("material_id")
+  sectionId  Int      @map("section_id")
+  filename   String?
+  filePath   String?  @map("file_path")
+  fileType   String?  @map("file_type")
+  uploadedBy Int?     @map("uploaded_by")
+  uploadedAt DateTime @default(now()) @map("uploaded_at")
+
+  section CourseSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  uploader User? @relation("uploadedMaterials", fields: [uploadedBy], references: [id])
+
+  @@map("unitmaterials")
+}
+
+model ContentItem {
+  id                    Int     @id @default(autoincrement()) @map("content_id")
+  sectionId             Int     @map("section_id")
+  title                 String
+  estimatedDurationMin  Int?    @map("estimated_duration_min")
+  learningObjectives    String? @map("learning_objectives")
+  workflowStatus        WorkflowStatus @default(Planned) @map("workflow_status")
+  videoLink             String? @map("video_link")
+  reviewNotes           String? @map("review_notes")
+  uploadedByEditorId    Int?    @map("uploaded_by_editor_id")
+  practiceQuestionsUrl  String? @map("practice_questions_url")
+  referenceMaterialUrl  String? @map("reference_material_url")
+
+  section CourseSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  contentscript Contentscript?
+  uploadedByEditor User? @relation("uploadedByEditor", fields: [uploadedByEditorId], references: [id])
+
+  @@unique([sectionId, title])
+  @@map("contentitems")
+}
+
+model Contentscript {
+  id                   Int  @id @default(autoincrement()) @map("script_id")
+  contentId            Int  @unique @map("content_id")
+  pptFileData          Bytes? @map("ppt_file_data")
+  docFileData          Bytes? @map("doc_file_data")
+  zipFileData          Bytes? @map("zip_file_data")
+  introductionScript   String? @map("introduction_script")
+  instructionsForEditor String? @map("instructions_for_editor")
+
+  content ContentItem @relation(fields:[contentId], references:[id], onDelete: Cascade)
+
+  @@map("contentscripts")
+}
+
+model UserCourseAssignment {
+  id       Int @id @default(autoincrement()) @map("user_course_id")
+  userId   Int @map("user_id")
+  courseId Int @map("course_id")
+
+  user User @relation(fields:[userId], references:[id], onDelete: Cascade)
+  course Course @relation(fields:[courseId], references:[id], onDelete: Cascade)
+
+  @@unique([userId, courseId], name: "user_course_unique")
+  @@map("usercourseassignment")
+}
+
+model CourseSemester {
+  id              Int @id @default(autoincrement()) @map("sem_id")
+  courseId        Int @map("course_id")
+  semesterNumber  Int @map("semester_number")
+  year            Int
+
+  course Course @relation(fields:[courseId], references:[id], onDelete: Cascade)
+
+  @@unique([courseId, semesterNumber, year], name: "course_sem_unique")
+  @@map("coursesemesters")
+}
+

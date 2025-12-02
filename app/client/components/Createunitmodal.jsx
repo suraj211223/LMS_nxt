@@ -39,6 +39,8 @@ const Createunitmodal = ({ open, onClose, courseId }) => {
       formData.append("unit_title", data.unitname);
       formData.append("unit_code", data.unitcode);
       formData.append("prof_name", data.profname);
+      if (data.ppt) formData.append("ppt", data.ppt);
+      if (data.materials) formData.append("materials", data.materials);
 
       const res = await fetch("/api/teacher/create-unit", {
         method: "POST",
@@ -120,6 +122,33 @@ const Createunitmodal = ({ open, onClose, courseId }) => {
               disabled={loading}
               fullWidth
             />
+
+            <Box>
+              <Typography variant="caption" display="block" gutterBottom>
+                Upload PPT (Optional)
+              </Typography>
+              <input
+                type="file"
+                name="ppt"
+                accept=".ppt,.pptx"
+                onChange={(e) => setData((prev) => ({ ...prev, ppt: e.target.files[0] }))}
+                disabled={loading}
+                style={{ width: '100%' }}
+              />
+            </Box>
+
+            <Box>
+              <Typography variant="caption" display="block" gutterBottom>
+                Upload Materials (Optional)
+              </Typography>
+              <input
+                type="file"
+                name="materials"
+                onChange={(e) => setData((prev) => ({ ...prev, materials: e.target.files[0] }))}
+                disabled={loading}
+                style={{ width: '100%' }}
+              />
+            </Box>
           </Box>
         </DialogContent>
 

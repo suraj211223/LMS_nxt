@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
-import { pool } from "../../../../lib/db";
+import { PrismaClient } from "@prisma/client";
 import { promises as fs } from "fs";
 import path from "path";
+
+const prisma = new PrismaClient();
 
 export const runtime = "nodejs";
 
@@ -9,141 +11,92 @@ export const runtime = "nodejs";
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
-    const courseId = searchParams.get('courseId');
-    const programId = searchParams.get('programId');
-    const schoolId = searchParams.get('schoolId');
-
-    let query;
-    let params = [];
+    const courseId = searchParams.get("courseId");
+    const programId = searchParams.get("programId");
+    const schoolId = searchParams.get("schoolId");
+    const userId = searchParams.get("userId");
 
     if (courseId) {
-      // Fetch specific course with its sections and content items
-      query = `
-        SELECT 
-          c.course_id,
-          c.title as course_name,
-          c.course_code,
-          c.status as course_status,
-          p.program_name,
-          p.program_code,
-          s.school_name,
-          cs.section_id,
-          cs.title as section_title,
-          cs.order_index as section_order,
-          ci.content_id,
-          ci.title as topic_name,
-          ci.estimated_duration_min,
-          ci.workflow_status,
-          ci.learning_objectives
-        FROM courses c
-        LEFT JOIN programs p ON c.program_id = p.program_id
-        LEFT JOIN schools s ON p.school_id = s.school_id
-        LEFT JOIN coursesections cs ON c.course_id = cs.course_id
-        LEFT JOIN contentitems ci ON cs.section_id = ci.section_id
-        WHERE c.course_id = ?
-        ORDER BY cs.order_index ASC, ci.content_id ASC
-      `;
-      params = [courseId];
-    } else {
-      // Fetch all courses with basic info
-      query = `
-        SELECT 
-          c.course_id,
-          c.title as course_name,
-          c.course_code,
-          c.status as course_status,
-          p.program_name,
-          p.program_code,
-          s.school_name,
-          COUNT(DISTINCT cs.section_id) as unit_count,
-          COUNT(DISTINCT ci.content_id) as topic_count
-        FROM courses c
-        LEFT JOIN programs p ON c.program_id = p.program_id
-        LEFT JOIN schools s ON p.school_id = s.school_id
-        LEFT JOIN coursesections cs ON c.course_id = cs.course_id
-        LEFT JOIN contentitems ci ON cs.section_id = ci.section_id
-      `;
+      const course = await prisma.course.findUnique({
+        where: { id: parseInt(courseId) },
+        include: {
+          program: {
+            include: { school: true },
+          },
+          sections: {
+            include: {
+              contents: true,
+            },
+          },
+        },
+      });
 
-      // Add filters if provided
-      if (programId) {
-        query += ` WHERE c.program_id = ?`;
-        params.push(programId);
-      } else if (schoolId) {
-        query += ` WHERE p.school_id = ?`;
-        params.push(schoolId);
-      }
-
-      query += `
-        GROUP BY c.course_id, c.title, c.course_code, c.status, 
-                 p.program_name, p.program_code, s.school_name
-        ORDER BY s.school_name, p.program_name, c.title
-      `;
-    }
-
-    const [rows] = await pool.query(query, params);
-
-    if (courseId) {
-      // Structure data for single course with units and topics
-      if (!rows.length) {
+      if (!course) {
         return NextResponse.json({ error: "Course not found" }, { status: 404 });
       }
 
       const courseData = {
-        course_id: rows[0].course_id,
-        name: rows[0].course_name,
-        course_code: rows[0].course_code,
-        status: rows[0].course_status,
-        program: rows[0].program_name,
-        department: rows[0].school_name,
-        units: []
+        course_id: course.id,
+        name: course.title,
+        course_code: course.courseCode,
+        status: course.status,
+        program: course.program?.programName,
+        department: course.program?.school?.name,
+        units: course.sections.map((section) => ({
+          id: `u${section.id}`,
+          section_id: section.id,
+          name: section.title,
+          order: section.orderIndex,
+          topics: section.contents.map((item) => ({
+            id: `t${item.id}`,
+            content_id: item.id,
+            name: item.title,
+            estimatedTime: item.estimatedDurationMin || 0,
+            status: mapWorkflowStatus(item.workflowStatus),
+            learning_objectives: item.learningObjectives,
+          })),
+        })),
       };
 
-      // Group sections and topics
-      const unitsMap = new Map();
-
-      rows.forEach(row => {
-        if (row.section_id && !unitsMap.has(row.section_id)) {
-          unitsMap.set(row.section_id, {
-            id: `u${row.section_id}`,
-            section_id: row.section_id,
-            name: row.section_title,
-            order: row.section_order,
-            topics: []
-          });
-        }
-
-        if (row.content_id && unitsMap.has(row.section_id)) {
-          const unit = unitsMap.get(row.section_id);
-          unit.topics.push({
-            id: `t${row.content_id}`,
-            content_id: row.content_id,
-            name: row.topic_name,
-            estimatedTime: row.estimated_duration_min || 0,
-            status: mapWorkflowStatus(row.workflow_status),
-            learning_objectives: row.learning_objectives
-          });
-        }
-      });
-
-      courseData.units = Array.from(unitsMap.values()).sort((a, b) => a.order - b.order);
-
       return NextResponse.json(courseData);
-    } else {
-      // Return list of all courses
-      const courses = rows.map(row => ({
-        course_id: row.course_id,
-        name: row.course_name,
-        course_code: row.course_code,
-        status: row.course_status,
-        program: row.program_name,
-        department: row.school_name,
-        unit_count: row.unit_count || 0,
-        topic_count: row.topic_count || 0
-      }));
-
-      return NextResponse.json({ courses });
     }
 
+    const courses = await prisma.course.findMany({
+      where: {
+        ...(userId && {
+          assignments: {
+            some: { userId: parseInt(userId) },
+          },
+        }),
+        ...(programId && { programId: parseInt(programId) }),
+        ...(schoolId && {
+          program: { schoolId: parseInt(schoolId) },
+        }),
+      },
+      include: {
+        program: {
+          include: { school: true },
+        },
+        sections: {
+          include: {
+            contents: true,
+          },
+        },
+      },
+    });
+
+    const formattedCourses = courses.map((course) => ({
+      course_id: course.id,
+      name: course.title,
+      course_code: course.courseCode,
+      status: course.status,
+      program: course.program?.programName,
+      department: course.program?.school?.name,
+      unit_count: course.sections.length,
+      topic_count: course.sections.reduce((acc, section) => acc + section.contents.length, 0),
+    }));
+
+    return NextResponse.json({ courses: formattedCourses });
   } catch (err) {
     console.error("GET route error:", err);
     return NextResponse.json({ error: String(err) }, { status: 500 });
@@ -153,16 +106,16 @@ export async function GET(req) {
 // Helper function to map database workflow status to frontend status
 function mapWorkflowStatus(dbStatus) {
   const statusMap = {
-    'Planned': 'planned',
-    'Scripted': 'scripted', 
-    'Editing': 'editing',
-    'Post-Editing': 'post-editing',
-    'Ready_for_Video_Prep': 'ready',
-    'Under_Review': 'review',
-    'Published': 'published'
+    Planned: "planned",
+    Scripted: "scripted",
+    Editing: "editing",
+    "Post-Editing": "post-editing",
+    "Ready_for_Video_Prep": "ready",
+    "Under_Review": "review",
+    Published: "published",
   };
-  
-  return statusMap[dbStatus] || 'planned';
+
+  return statusMap[dbStatus] || "planned";
 }
 
 export async function POST(req) {
@@ -183,21 +136,24 @@ export async function POST(req) {
     const pptFile = form.get("ppt");
     const otherFiles = form.getAll("otherFiles");
 
-    //validate teacher
-    const [rows] = await pool.query(
-      "SELECT user_id FROM Users WHERE email = ?",
-      [userEmail]
-    );
+    const teacher = await prisma.user.findUnique({
+      where: { email: userEmail },
+    });
 
-    if (!rows.length) {
-      return NextResponse.json({ error: "Teacher not found" }, { status: 401 });
+    if (!teacher) {
+      return NextResponse.json(
+        { error: "Teacher not found" },
+        { status: 401 }
+      );
     }
-
-    const teacher = rows[0];
 
     const SAFE = (s = "") => String(s).replace(/[\/\\:?<>|"]/g, "-");
 
-    const base = process.env.STORAGE_BASE;
+    let base = process.env.STORAGE_BASE;
+    if (!base) {
+      console.warn("STORAGE_BASE not set, falling back to ./storage");
+      base = path.join(process.cwd(), "storage");
+    }
     const school = SAFE(schoolName);
     const program = SAFE(programName);
     const semester = SAFE(semesterName);
@@ -211,7 +167,6 @@ export async function POST(req) {
 
     let pptFilename = null;
 
-    //save PPT
     if (pptFile && pptFile.name) {
       const arrayBuffer = await pptFile.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
@@ -219,25 +174,18 @@ export async function POST(req) {
       await fs.writeFile(path.join(fullPath, pptFilename), buffer);
     }
 
-    //insert section
-    const [insert] = await pool.query(
-      `INSERT INTO CourseSections 
-       (course_id, title, order_index, unit_code, prof_name, storage_path, ppt_filename)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [
-        courseId,
+    const section = await prisma.courseSection.create({
+      data: {
+        courseId: parseInt(courseId),
         title,
-        0,
-        unitCode,
-        profName,
-        fullPath,
-        pptFilename
-      ]
-    );
+        orderIndex: 0,
+        unitCode: unitCode,
+        profName: profName,
+        storagePath: fullPath,
+        pptFilename: pptFilename,
+      },
+    });
 
-    const sectionId = insert.insertId;
-
-    //save other materials
     for (const file of otherFiles) {
       if (!file || !file.name) continue;
 
@@ -249,21 +197,18 @@ export async function POST(req) {
 
       await fs.writeFile(filePath, buffer);
 
-      await pool.query(
-        `INSERT INTO UnitMaterials (section_id, filename, file_path, file_type, uploaded_by)
-        VALUES (?, ?, ?, ?, ?)`,
-        [
-          sectionId,
+      await prisma.unitMaterial.create({
+        data: {
+          sectionId: section.id,
           filename,
-          filePath,
-          path.extname(filename),
-          teacher.user_id
-        ]
-      );
+          filePath: filePath,
+          fileType: path.extname(filename),
+          uploadedBy: teacher.id,
+        },
+      });
     }
 
     return NextResponse.json({ success: true, directory: fullPath });
-
   } catch (err) {
     console.error("route error:", err);
     return NextResponse.json({ error: String(err) }, { status: 500 });

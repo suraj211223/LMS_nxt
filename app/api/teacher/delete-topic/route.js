@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
-import { pool } from "../../../../lib/db";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export const runtime = "nodejs";
+//...
 
 export async function DELETE(req) {
   try {
     const { searchParams } = new URL(req.url);
-    const topicId = searchParams.get('topicId');
+    const topicId = searchParams.get("topicId");
 
     // Validate required fields
     if (!topicId) {
@@ -17,12 +20,11 @@ export async function DELETE(req) {
     }
 
     // Check if the topic exists before deleting
-    const [existingTopic] = await pool.query(
-      `SELECT content_id FROM contentitems WHERE content_id = ?`,
-      [topicId]
-    );
+    const existingTopic = await prisma.contentItem.findUnique({
+      where: { id: parseInt(topicId) },
+    });
 
-    if (existingTopic.length === 0) {
+    if (!existingTopic) {
       return NextResponse.json(
         { error: "Topic not found" },
         { status: 404 }
@@ -30,12 +32,11 @@ export async function DELETE(req) {
     }
 
     // Delete the topic from the database
-    const [result] = await pool.query(
-      `DELETE FROM contentitems WHERE content_id = ?`,
-      [topicId]
-    );
+    const result = await prisma.contentItem.delete({
+      where: { id: parseInt(topicId) },
+    });
 
-    if (result.affectedRows === 0) {
+    if (!result) {
       return NextResponse.json(
         { error: "Failed to delete topic" },
         { status: 500 }
@@ -44,9 +45,8 @@ export async function DELETE(req) {
 
     return NextResponse.json({
       success: true,
-      message: "Topic deleted successfully"
+      message: "Topic deleted successfully",
     });
-
   } catch (error) {
     console.error("Error deleting topic:", error);
     return NextResponse.json(

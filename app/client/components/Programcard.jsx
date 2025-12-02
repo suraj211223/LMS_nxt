@@ -1,27 +1,46 @@
 "use client";
 import React from 'react';
-import { Card, CardContent, Typography, Chip, Box } from '@mui/material';
+import { Card, CardContent, Typography, Chip, Box, IconButton } from '@mui/material';
+import { Trash2 } from 'lucide-react';
 
-const Programcard = ({ id, programName, programCode, schoolName }) => {
+const AdminProgramcard = ({ id, programName, programCode, schoolName }) => {
   return (
     <Card 
-      className="h-full transition-all duration-300 hover:shadow-lg hover:scale-105 cursor-pointer border-l-4 border-l-blue-500"
+      className="h-full transition-all duration-300 hover:shadow-lg  cursor-pointer border-l-4 border-l-blue-500"
       onClick={() => {
         // Navigate to program details or courses within this program
-        window.location.href = `/teachers/programs/${id}`;
+        window.location.href = `/admin/programs/${id}`;
       }}
     >
       <CardContent className="p-6">
         <Box className="flex flex-col h-full">
           {/* Program Header */}
-          <Box className="flex items-center gap-2 mb-3">
+          <Box className="flex justify-between items-center mb-3">
             <Typography 
               variant="h6" 
               component="h3" 
-              className="font-bold text-gray-800 leading-tight"
+              className="font-bold text-gray-800 leading-tight flex-1"
             >
               {programName}
             </Typography>
+            <IconButton 
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                // Add delete functionality here
+                console.log('Delete program:', id);
+              }}
+              sx={{
+                color: "#ef4444", // red-500
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  backgroundColor: "rgba(254, 226, 226, 0.8)", // light red background
+                  color: "#dc2626" // red-600 on hover
+                }
+              }}
+            >
+              <Trash2 size={18} />
+            </IconButton>
           </Box>
 
           {/* Program Code */}
@@ -60,4 +79,4 @@ const Programcard = ({ id, programName, programCode, schoolName }) => {
   );
 };
 
-export default Programcard;
+export default AdminProgramcard;

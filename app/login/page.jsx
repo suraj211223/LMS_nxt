@@ -1,24 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { 
-  Card, 
-  CardContent, 
-  TextField, 
-  Button, 
-  Typography, 
-  Box, 
+import {
+  TextField,
+  Button,
+  Typography,
+  Box,
   Alert,
   CircularProgress,
   InputAdornment,
-  Divider
+  IconButton,
 } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleLogin(e) {
     e.preventDefault();
@@ -35,10 +35,8 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (data.success && data.redirect) {
-        console.log("Login successful, redirecting to:", data.redirect);
         window.location.href = data.redirect;
       } else {
-        console.log("Login failed:", data);
         setError(data.error || "Login failed");
       }
     } catch (err) {
@@ -50,75 +48,31 @@ export default function LoginPage() {
 
   return (
     <Box
-      suppressHydrationWarning
       sx={{
         minHeight: "100vh",
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
         display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 2,
+        backgroundColor: "white",
       }}
     >
-      <Card
+      {/* Left Side */}
+      <Box
         sx={{
-          maxWidth: 400,
-          width: "100%",
-          boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-          borderRadius: 3,
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          px: 6,
         }}
       >
-        <CardContent sx={{ p: 4 }}>
-          {/* Header */}
-          <Box sx={{ textAlign: "center", mb: 3 }}>
-            <Box
-              sx={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: 64,
-                height: 64,
-                borderRadius: "50%",
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                mb: 2,
-              }}
-            >
-              <Typography variant="h3" sx={{ color: "white" }}>🎓</Typography>
-            </Box>
-            <Typography
-              variant="h4"
-              fontWeight="bold"
-              sx={{
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                backgroundClip: "text",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                mb: 1,
-              }}
-            >
-              LMS Portal
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Welcome back! Please sign in to your account
-            </Typography>
-          </Box>
+        <Box sx={{ maxWidth: 420, width: "100%" }}>
+          <Typography
+            variant="h3"
+            sx={{ fontWeight: "bold", mb: 8, color: "#000" }}
+          >
+            WELCOME TO LMS
+          </Typography>
 
-          {/* Demo Credentials */}
-          <Box sx={{ mb: 3, p: 2, backgroundColor: "#f8f9fa", borderRadius: 2 }}>
-            <Typography variant="caption" sx={{ fontWeight: "bold", color: "#6c757d" }}>
-              Demo Credentials:
-            </Typography>
-            <Typography variant="caption" display="block" sx={{ color: "#6c757d" }}>
-              Teacher: testteacher@CU.in / dummy
-            </Typography>
-            <Typography variant="caption" display="block" sx={{ color: "#6c757d" }}>
-              Admin: admin@CU.in / dummy
-            </Typography>
-          </Box>
-
-          <Divider sx={{ mb: 3 }} />
-
-          {/* Error Message */}
+          {/* Error */}
           {error && (
             <Alert severity="error" sx={{ mb: 3 }}>
               {error}
@@ -127,76 +81,120 @@ export default function LoginPage() {
 
           {/* Login Form */}
           <form onSubmit={handleLogin}>
-            <TextField
-              fullWidth
-              label="Email Address"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={loading}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    📧
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ mb: 3 }}
-            />
+            {/* Email */}
+            <Box sx={{ mb: 4 }}>
+              <Typography sx={{ mb: 1, fontWeight: 500 }}>Username</Typography>
+              <TextField
+                fullWidth
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
+                variant="outlined"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 2,
+                    "& fieldset": {
+                      borderColor: "#000",
+                      borderWidth: 2,
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#000",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#000",
+                    },
+                  },
+                }}
+              />
+            </Box>
 
-            <TextField
-              fullWidth
-              label="Password"
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    🔒
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ mb: 4 }}
-            />
+            {/* Password */}
+            <Box sx={{ mb: 5 }}>
+              <Typography sx={{ mb: 1, fontWeight: 500 }}>Password</Typography>
+              <TextField
+                fullWidth
+                type={showPassword ? "text" : "password"}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
+                variant="outlined"
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                        sx={{ color: "#333" }}
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 2,
+                    "& fieldset": {
+                      borderColor: "#000",
+                      borderWidth: 2,
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#000",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#000",
+                    },
+                  },
+                }}
+              />
+            </Box>
 
+            {/* Button */}
             <Button
               type="submit"
               fullWidth
               variant="contained"
               disabled={loading}
               sx={{
-                py: 1.5,
-                fontSize: "1rem",
+                py: 2,
+                borderRadius: "50px",
                 fontWeight: "bold",
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                "&:hover": {
-                  background: "linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)",
-                },
+                fontSize: "1rem",
+                backgroundColor: "#000",
+                "&:hover": { backgroundColor: "#333" },
               }}
             >
               {loading ? (
-                <CircularProgress size={24} color="inherit" />
+                <CircularProgress size={26} color="inherit" />
               ) : (
-                "Sign In"
+                "Sign in →"
               )}
             </Button>
           </form>
 
-          {/* Footer */}
           <Typography
             variant="caption"
-            display="block"
             textAlign="center"
-            sx={{ mt: 3, color: "text.secondary" }}
+            display="block"
+            sx={{ mt: 4, color: "gray" }}
           >
-            Learning Management System © 2024
+            Learning Management System © 2025
           </Typography>
-        </CardContent>
-      </Card>
+        </Box>
+      </Box>
+
+      {/* Right Blue Panel */}
+      <Box
+        sx={{
+          flex: 1,
+          backgroundColor: "#0b2ea1",
+          display: { xs: "none", md: "block" },
+        }}
+      />
     </Box>
   );
 }
+
