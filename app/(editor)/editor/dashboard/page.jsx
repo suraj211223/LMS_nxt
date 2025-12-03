@@ -285,8 +285,14 @@ const EditorDash = () => {
                 <Chip
                   label={`${editingTopics.length} Active`}
                   sx={{
-                    color: "black",
-                    fontWeight: 600
+                    backgroundColor: "#f3f4f6",
+                    color: "#1f2937",
+                    fontWeight: 700,
+                    fontSize: "0.95rem",
+                    height: "32px",
+                    "& .MuiChip-label": {
+                      px: 2
+                    }
                   }}
                 />
               </Box>
@@ -304,7 +310,11 @@ const EditorDash = () => {
                   backgroundColor: 'white',
                   borderRadius: 1,
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: 2
+                    borderRadius: 2,
+                    '& input::placeholder': {
+                      color: '#4b5563',
+                      opacity: 1
+                    }
                   }
                 }}
               />

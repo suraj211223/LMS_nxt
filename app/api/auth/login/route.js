@@ -77,7 +77,7 @@ export async function POST(req) {
 
     if (roleName === "teacher" || roleName === "teacher assistant") redirect = "/teachers/dashboard";
     if (roleName === "admin") redirect = "/admin";
-    if (roleName === "editor") redirect = "/editor/dashboard";
+    if (roleName === "editor" || roleName === "publisher") redirect = "/editor/dashboard";
 
     // If teacher or TA, fetch only their assigned courses and include in response
     let assignedCourses = [];
