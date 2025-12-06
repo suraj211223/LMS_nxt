@@ -19,29 +19,43 @@ export async function GET(req) {
     const cookieStore = await cookies();
     const userId = cookieStore.get("userId")?.value;
 
-    // Validate userId
     if (!userId || isNaN(parseInt(userId))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(userId) },
+      include: { role: true }
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 401 });
+    }
+
+    const userRole = user.role?.roleName || "Teacher";
+
     if (courseId) {
-      // ✨ SECURITY FIX: Verify user is assigned to this course
+      const whereCondition = {
+        id: parseInt(courseId)
+      };
+
+      if (['Teacher', 'Teaching Assistant', 'Teacher Assistant'].includes(userRole)) {
+        whereCondition.assignments = {
+          some: { userId: parseInt(userId) }
+        };
+      }
+
       const course = await prisma.course.findFirst({
-        where: {
-          id: parseInt(courseId),
-          assignments: {
-            some: { userId: parseInt(userId) }
-          }
-        },
+        where: whereCondition,
         include: {
           program: {
             include: { school: true },
           },
           sections: {
-            orderBy: { id: 'asc' }, // Sort units by creation order
+            orderBy: { id: 'asc' },
             include: {
               contents: {
-                orderBy: { id: 'asc' }, // Sort topics by creation order
+                orderBy: { id: 'asc' },
                 include: {
                   contentscript: true,
                 },
@@ -55,13 +69,6 @@ export async function GET(req) {
       if (!course) {
         return NextResponse.json({ error: "Course not found or access denied" }, { status: 404 });
       }
-
-      // Fetch User Role
-      const user = await prisma.user.findUnique({
-        where: { id: parseInt(userId) },
-        include: { role: true }
-      });
-      const userRole = user?.role?.roleName || "Teacher";
 
       const courseData = {
         userRole,
@@ -99,12 +106,16 @@ export async function GET(req) {
       return NextResponse.json(courseData);
     }
 
-    // List courses assigned to the user
+    // List courses assigned to the user (unless Admin/Editor)
+    const isRestricted = ['Teacher', 'Teaching Assistant', 'Teacher Assistant'].includes(userRole);
+
     const courses = await prisma.course.findMany({
       where: {
-        assignments: {
-          some: { userId: parseInt(userId) },
-        },
+        ...(isRestricted && {
+          assignments: {
+            some: { userId: parseInt(userId) },
+          },
+        }),
         ...(programId && { programId: parseInt(programId) }),
         ...(schoolId && {
           program: { schoolId: parseInt(schoolId) },
@@ -120,6 +131,7 @@ export async function GET(req) {
           },
         },
       },
+      orderBy: { id: 'desc' }
     });
 
     const formattedCourses = courses.map((course) => ({
@@ -140,7 +152,6 @@ export async function GET(req) {
   }
 }
 
-// Helper function to map database workflow status to frontend status
 function mapWorkflowStatus(dbStatus) {
   const statusMap = {
     Planned: "planned",

@@ -69,6 +69,37 @@ export default function ReviewDialogue({ open, onClose, topic, onFeedbackSubmit,
                         </Button>
                     </Box>
 
+                    {/* Additional Link Section */}
+                    {topic.additionalLink && canApprove && (
+                        <Box
+                            sx={{
+                                p: 2,
+                                border: "1px solid #e5e7eb",
+                                borderRadius: 2,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                bgcolor: "#f9fafb",
+                            }}
+                        >
+                            <Box>
+                                <Typography variant="subtitle2" fontWeight={600}>
+                                    Additional Resources
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary" noWrap sx={{ maxWidth: 300 }}>
+                                    {topic.additionalLink}
+                                </Typography>
+                            </Box>
+                            <Button
+                                variant="outlined"
+                                onClick={() => window.open(topic.additionalLink, "_blank")}
+                                size="small"
+                            >
+                                Open
+                            </Button>
+                        </Box>
+                    )}
+
                     {/* Feedback Section */}
                     <Box>
                         <Typography variant="subtitle2" fontWeight={600} gutterBottom>

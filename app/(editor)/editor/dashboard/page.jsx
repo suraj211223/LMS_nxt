@@ -40,11 +40,13 @@ const EditorDash = () => {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [currentTopic, setCurrentTopic] = useState(null);
   const [videoLink, setVideoLink] = useState("");
+  const [additionalLink, setAdditionalLink] = useState(""); // ✨ New State
   const [viewedFeedbackTopics, setViewedFeedbackTopics] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [canPublish, setCanPublish] = useState(false);
 
-  // Workflow steps for progress bar
+  const editingTopics = topicsInProgress || [];
+
   const workflowSteps = [
     { id: 'Planned', label: 'Planned', color: '#64748b' },
     { id: 'Scripted', label: 'Scripted', color: '#3b82f6' },
@@ -52,24 +54,14 @@ const EditorDash = () => {
     { id: 'Post-Editing', label: 'Post-Editing', color: '#f59e0b' },
     { id: 'Ready_for_Video_Prep', label: 'Ready for Video', color: '#10b981' },
     { id: 'Under_Review', label: 'Under Review', color: '#8b5cf6' },
-    { id: 'Approved', label: 'Approved', color: '#10b981' },
+    { id: 'Approved', label: 'Approved', color: '#059669' },
     { id: 'Published', label: 'Published', color: '#22c55e' }
   ];
 
-  // ... (rest of the file)
+  // ... (existing code)
 
-
-
-  // Filter topics to show those in "Editing", "Scripted", "Post-Editing", "Ready_for_Video_Prep", "Under_Review", or "Approved" status
-  const editingTopics = topicsInProgress.filter(topic =>
-    ['Scripted', 'Editing', 'Post-Editing', 'Ready_for_Video_Prep', 'Under_Review', 'Approved'].includes(topic.workflow_status) &&
-    (searchQuery === "" || (topic.assigned_editor_name && topic.assigned_editor_name.toLowerCase().includes(searchQuery.toLowerCase())))
-  );
-
-  // Handle record button click
   const handleRecordClick = async (topic) => {
     if (topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted') {
-      // Update status to Post-Editing
       try {
         const res = await fetch(`/api/topics/update-status`, {
           method: 'POST',
@@ -83,7 +75,6 @@ const EditorDash = () => {
         });
 
         if (res.ok) {
-          // Refresh data
           fetchDashboardData();
         }
       } catch (error) {
@@ -92,7 +83,8 @@ const EditorDash = () => {
     } else if (['Post-Editing', 'Ready_for_Video_Prep', 'Under_Review'].includes(topic.workflow_status)) {
       // Show upload modal for initial upload OR editing existing link
       setCurrentTopic(topic);
-      setVideoLink(topic.video_link || ""); // Pre-fill if exists (need to ensure API returns video_link)
+      setVideoLink(topic.video_link || "");
+      setAdditionalLink(topic.additional_link || "");
       setUploadModalOpen(true);
     }
   };
@@ -110,6 +102,7 @@ const EditorDash = () => {
         body: JSON.stringify({
           topicId: currentTopic.content_id,
           videoLink: videoLink,
+          additionalLink: additionalLink, // ✨ Send to API
           newStatus: 'Under_Review'
         }),
       });
@@ -641,6 +634,23 @@ const EditorDash = () => {
                 value={videoLink}
                 onChange={(e) => setVideoLink(e.target.value)}
                 placeholder="https://example.com/video-link"
+                sx={{
+                  mb: 2,
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "12px"
+                  }
+                }}
+              />
+              <TextField
+                margin="dense"
+                label="Additional Link (Optional)"
+                type="url"
+                fullWidth
+                variant="outlined"
+                value={additionalLink} // ✨ New State
+                onChange={(e) => setAdditionalLink(e.target.value)}
+                placeholder="https://example.com/resources"
+                helperText="Link for extra resources, viewable by TAs and Publishers."
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "12px"

@@ -80,7 +80,8 @@ export async function GET(req) {
                             course_title: course.title,
                             unit_title: section.title,
                             program_name: course.program?.programName || "Unknown Program", // ✨ Map program name
-                            videoLink: topic.videoLink
+                            videoLink: topic.videoLink,
+                            additionalLink: topic.additionalLink // ✨ Return additional link
                         });
                     }
                 });
@@ -95,8 +96,8 @@ export async function GET(req) {
                 videosPublished
             },
             topicsForReview,
-            userRole, // ✨ Return user role
-            canApprove: user?.role?.canApproveContent || false // ✨ Return approval permission
+            userRole,
+            canApprove: user?.role?.canApproveContent || ["teacher assistant", "teaching assistant", "publisher"].includes(userRole?.toLowerCase()) || false
         });
 
     } catch (error) {

@@ -11,23 +11,25 @@ import {
   Stack,
 } from "@mui/material";
 
-const programTypes = ["BSC", "MSC", "MBA", "BBA", "MTECH", "BTECH","BCOM"];
+const programTypes = ["BSC", "MSC", "MBA", "BBA", "MTECH", "BTECH", "BCOM"];
 
 const CreateProgramModal = ({ open, onClose }) => {
   const [programCode, setProgramCode] = useState("");
   const [programName, setProgramName] = useState("");
-
   const [schools, setSchools] = useState([]);
   const [selectedSchool, setSelectedSchool] = useState(null);
-
   const [programType, setProgramType] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchSchools = async () => {
       try {
-        const res = await fetch("/api/schools"); 
-        const data = await res.json();
-        setSchools(data);
+        const res = await fetch("/api/schools");
+        if (res.ok) {
+          const data = await res.json();
+          // The API returns [{id, name, ...}]
+          setSchools(data || []);
+        }
       } catch (e) {
         console.error("Error loading schools:", e);
       }
@@ -36,17 +38,41 @@ const CreateProgramModal = ({ open, onClose }) => {
     if (open) fetchSchools();
   }, [open]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (!selectedSchool || !programName || !programCode) {
+      alert("Please fill in all fields");
+      return;
+    }
+
+    setLoading(true);
     const payload = {
       program_code: programCode,
       program_name: programName,
-      school_id: selectedSchool?.school_id,
+      school_id: selectedSchool.id,
       program_type: programType.toUpperCase(),
     };
 
-    console.log("Program Payload:", payload);
+    try {
+      const res = await fetch("/api/admin/schools/create/programs/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
 
-    onClose();
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to create program");
+      }
+
+      alert("Program created successfully!");
+      onClose();
+      if (window.location.reload) window.location.reload();
+    } catch (e) {
+      console.error(e);
+      alert(e.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -88,14 +114,14 @@ const CreateProgramModal = ({ open, onClose }) => {
           {/* School Select */}
           <Autocomplete
             options={schools}
-            getOptionLabel={(opt) => opt.school_name || ""}
+            getOptionLabel={(opt) => opt.name || ""}
             value={selectedSchool}
             isOptionEqualToValue={(opt, val) =>
-              opt.school_id === val?.school_id
+              opt.id === val?.id
             }
             onChange={(e, newValue) => setSelectedSchool(newValue)}
             renderInput={(params) => (
-              <TextField {...params} label="School" />
+              <TextField {...params} label="Select School" />
             )}
           />
 
@@ -105,7 +131,7 @@ const CreateProgramModal = ({ open, onClose }) => {
             options={programTypes}
             value={programType}
             onInputChange={(e, newVal) =>
-              setProgramType(newVal.toUpperCase()) // uppercase logic
+              setProgramType(newVal.toUpperCase())
             }
             renderInput={(params) => (
               <TextField {...params} label="Program Type (BSC, MSC...)" />
@@ -114,11 +140,11 @@ const CreateProgramModal = ({ open, onClose }) => {
 
           {/* Buttons */}
           <Stack direction="row" spacing={2} justifyContent="flex-end" mt={2}>
-            <Button variant="text" onClick={onClose}>
+            <Button variant="text" onClick={onClose} disabled={loading}>
               Cancel
             </Button>
-            <Button variant="contained" onClick={handleSubmit}>
-              Create Program
+            <Button variant="contained" onClick={handleSubmit} disabled={loading}>
+              {loading ? "Creating..." : "Create Program"}
             </Button>
           </Stack>
         </Stack>

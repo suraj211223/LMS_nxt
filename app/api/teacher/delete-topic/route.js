@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { cookies } from "next/headers";
 
 const prisma = new PrismaClient();
 
 export const runtime = "nodejs";
-//...
 
 export async function DELETE(req) {
   try {
@@ -31,8 +31,23 @@ export async function DELETE(req) {
       );
     }
 
-    // Prevent deletion if topic is Published
-    if (existingTopic.workflowStatus === "Published") {
+    // Check user role for Admin override
+    const cookieStore = cookies();
+    const userId = cookieStore.get("userId")?.value;
+    let isAdmin = false;
+
+    if (userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: parseInt(userId) },
+        include: { role: true }
+      });
+      if (user && user.role?.roleName === 'Admin') {
+        isAdmin = true;
+      }
+    }
+
+    // Prevent deletion if topic is Published (unless Admin)
+    if (existingTopic.workflowStatus === "Published" && !isAdmin) {
       return NextResponse.json(
         { error: "Cannot delete a published topic." },
         { status: 403 }

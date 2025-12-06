@@ -8,7 +8,6 @@ export async function POST(req) {
   try {
     const { email, password } = await req.json();
 
-    // Validate input
     if (!email || !password) {
       return NextResponse.json(
         { error: "Email and password are required" },
@@ -34,19 +33,14 @@ export async function POST(req) {
       );
     }
 
-    // Login policy:
-    // - Prefer bcrypt compare (seed script writes BCrypt hashes)
-    // - For backward compatibility with demo plaintext entries use a fallback
     let passwordMatch = false;
     try {
-      // If password_hash looks like a bcrypt hash, try comparing
       if (
         typeof user.passwordHash === "string" &&
         user.passwordHash.startsWith("$2")
       ) {
         passwordMatch = await bcrypt.compare(password, user.passwordHash);
       } else {
-        // fallback: some sample/dump data stores 'dummy' in plaintext
         passwordMatch = user.passwordHash === password;
       }
     } catch (err) {
@@ -64,25 +58,23 @@ export async function POST(req) {
       );
     }
 
-    // Fetch role name
     const role = await prisma.role.findUnique({
       where: { id: user.roleId },
       select: { roleName: true },
     });
 
-    const roleName = role?.roleName.toLowerCase(); // Convert to lowercase for comparison
+    const roleName = role?.roleName.toLowerCase();
 
-    // Decide dashboard
     let redirect = "/login";
+    const isTeacherOrTA = ['teacher', 'teaching assistant', 'teacher assistant'].includes(roleName);
 
-    if (roleName === "teacher" || roleName === "teacher assistant") redirect = "/teachers/dashboard";
+    if (isTeacherOrTA) redirect = "/teachers/dashboard";
     if (roleName === "admin") redirect = "/admin";
     if (roleName === "editor" || roleName === "publisher") redirect = "/editor/dashboard";
 
-    // If teacher or TA, fetch only their assigned courses and include in response
     let assignedCourses = [];
     let assignedPrograms = [];
-    if (roleName === "teacher" || roleName === "teacher assistant") {
+    if (isTeacherOrTA) {
       const courses = await prisma.course.findMany({
         where: {
           assignments: {
@@ -143,7 +135,7 @@ export async function POST(req) {
     response.cookies.set("userId", String(user.id), {
       path: "/",
       httpOnly: true,
-      sameSite: "strict",
+      sameSite: "lax",
       maxAge: 60 * 60 * 24 * 7, // 1 week
     });
 

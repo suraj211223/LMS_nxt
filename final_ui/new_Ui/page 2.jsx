@@ -22,34 +22,35 @@ import ReviewDialogue from "../../../client/components/ReviewDialogue";
 
 // HemisphereProgress component
 const HemisphereProgress = ({ value, color = "#3b82f6" }) => {
-    const radius = 50;
-    const circumference = Math.PI * radius; // half circle
-    const offset = circumference - (value / 100) * circumference;
+  const radius = 50;
+  const circumference = Math.PI * radius; // half circle
+  const offset = circumference - (value / 100) * circumference;
 
-    return (
-        <svg width="200" height="100" viewBox="0 0 120 60">
-            {/* Background arc */}
-            <path
-                d="M10 60 A50 50 0 0 1 110 60"
-                stroke="#e5e7eb"
-                strokeWidth="12"
-                fill="none"
-            />
+  return (
+    <svg width="200" height="100" viewBox="0 0 120 60">
+      {/* Background arc */}
+      <path
+        d="M10 60 A50 50 0 0 1 110 60"
+        stroke="#e5e7eb"
+        strokeWidth="12"
+        fill="none"
+      />
 
-            {/* Progress arc */}
-            <path
-                d="M10 60 A50 50 0 0 1 110 60"
-                stroke={color}
-                strokeWidth="12"
-                fill="none"
-                strokeDasharray={circumference}
-                strokeDashoffset={offset}
-                strokeLinecap="round"
-                fillOpacity="0"
-            />
+      {/* Progress arc */}
+      <path
+        d="M10 60 A50 50 0 0 1 110 60"
+        stroke={color}
+        strokeWidth="12"
+        fill="none"
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        strokeLinecap="round"
+      />
 
-        </svg>
-    );
+      {/* Value text */}
+    
+    </svg>
+  );
 };
 
 const TeacherDash = () => {
@@ -66,7 +67,6 @@ const TeacherDash = () => {
     const [expandedTopic, setExpandedTopic] = useState(null);
     const [openReviewModal, setOpenReviewModal] = useState(false);
     const [currentTopic, setCurrentTopic] = useState(null);
-    const [canApprove, setCanApprove] = useState(false);
 
     // Workflow steps for progress bar
     const workflowSteps = [
@@ -118,7 +118,6 @@ const TeacherDash = () => {
             if (data.topicsForReview) {
                 setTopicsForReview(data.topicsForReview);
             }
-            if (data.canApprove !== undefined) setCanApprove(data.canApprove);
             setError(null);
         } catch (err) {
             console.error("Error fetching dashboard:", err);
@@ -206,29 +205,29 @@ const TeacherDash = () => {
                     {/* DASHBOARD CARDS */}
                     <Grid container spacing={3} direction="row" className="pt-8 px-20">
                         {[
-                            {
-                                label: "Total Topics",
-                                value: stats.totalTopics,
+                            { 
+                                label: "Total Topics", 
+                                value: stats.totalTopics, 
                                 progress: getProgressValue(stats.totalTopics, Math.max(stats.totalTopics, 10)),
-                                color: "#3b82f6"
+                                color: "#3b82f6" 
                             },
-                            {
-                                label: "Total Units",
-                                value: stats.totalUnits,
+                            { 
+                                label: "Total Units", 
+                                value: stats.totalUnits, 
                                 progress: getProgressValue(stats.totalUnits, Math.max(stats.totalUnits, 5)),
-                                color: "#22c55e"
+                                color: "#22c55e" 
                             },
-                            {
-                                label: "Videos to Review",
-                                value: stats.videosToReview,
+                            { 
+                                label: "Videos to Review", 
+                                value: stats.videosToReview, 
                                 progress: getProgressValue(stats.videosToReview, Math.max(stats.totalTopics, 1)),
-                                color: "#fb923c"
+                                color: "#fb923c" 
                             },
-                            {
-                                label: "Videos Published",
-                                value: stats.videosPublished,
+                            { 
+                                label: "Videos Published", 
+                                value: stats.videosPublished, 
                                 progress: getProgressValue(stats.videosPublished, Math.max(stats.totalTopics, 1)),
-                                color: "#a855f7"
+                                color: "#a855f7" 
                             },
                         ].map((item, index) => (
                             <Grid item xs={12} sm={6} md={3} lg={3} key={index}>
@@ -247,28 +246,28 @@ const TeacherDash = () => {
                                     <Box sx={{ p: 6, textAlign: "center" }} className="w-70">
                                         {/* Hemisphere Progress */}
                                         <Box sx={{ display: "flex", justifyContent: "center", mb: -4 }}>
-                                            <HemisphereProgress
-                                                value={item.progress}
-                                                color={item.color}
+                                            <HemisphereProgress 
+                                                value={item.progress} 
+                                                color={item.color} 
                                             />
                                         </Box>
-
+                                        
                                         {/* Card Content */}
-                                        <Typography
-                                            variant="h4"
-                                            sx={{
-                                                fontWeight: 700,
-                                                color: item.color,
-                                                mb: 1
+                                        <Typography 
+                                            variant="h4" 
+                                            sx={{ 
+                                                fontWeight: 700, 
+                                                color: item.color, 
+                                                mb: 1 
                                             }}
                                         >
                                             {item.value || 0}
                                         </Typography>
-
-                                        <Typography
-                                            variant="body1"
-                                            sx={{
-                                                color: "#6b7280",
+                                        
+                                        <Typography 
+                                            variant="body1" 
+                                            sx={{ 
+                                                color: "#6b7280", 
                                                 fontWeight: 500,
                                                 fontSize: "0.9rem"
                                             }}
@@ -331,7 +330,7 @@ const TeacherDash = () => {
                                                     backgroundColor: `${getStatusColor(topic.workflow_status)}08`,
                                                     borderRadius: "12px",
                                                     minHeight: "80px",
-                                                    "&.Mui-expanded": {
+                                                    "&.Mui-expanded": { 
                                                         borderRadius: "12px 12px 0 0",
                                                         minHeight: "80px"
                                                     },
@@ -341,10 +340,10 @@ const TeacherDash = () => {
                                                     }
                                                 }}
                                             >
-                                                <Box sx={{
-                                                    display: "flex",
-                                                    justifyContent: "space-between",
-                                                    width: "100%",
+                                                <Box sx={{ 
+                                                    display: "flex", 
+                                                    justifyContent: "space-between", 
+                                                    width: "100%", 
                                                     alignItems: "center",
                                                     pr: 2
                                                 }}>
@@ -362,10 +361,10 @@ const TeacherDash = () => {
                                                                     height: "24px"
                                                                 }}
                                                             />
-                                                            <Typography
-                                                                variant="h6"
-                                                                sx={{
-                                                                    fontWeight: 700,
+                                                            <Typography 
+                                                                variant="h6" 
+                                                                sx={{ 
+                                                                    fontWeight: 700, 
                                                                     color: "#1f2937",
                                                                     fontSize: "1.1rem"
                                                                 }}
@@ -373,7 +372,7 @@ const TeacherDash = () => {
                                                                 {topic.topic_title}
                                                             </Typography>
                                                         </Box>
-
+                                                        
                                                         {/* Course & Unit Info */}
                                                         <Box sx={{ display: "flex", alignItems: "center", gap: 2, ml: 4 }}>
                                                             <Typography variant="body2" sx={{ color: "#6b7280", fontSize: "0.85rem" }}>
@@ -385,7 +384,7 @@ const TeacherDash = () => {
                                                             </Typography>
                                                         </Box>
                                                     </Box>
-
+                                                    
                                                     {/* Right Side - Status & Duration */}
                                                     <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                                                         <Chip
@@ -403,8 +402,8 @@ const TeacherDash = () => {
                                                             <Chip
                                                                 label={`${topic.estimated_duration_min}m`}
                                                                 size="small"
-                                                                sx={{
-                                                                    backgroundColor: "#f3f4f6",
+                                                                sx={{ 
+                                                                    backgroundColor: "#f3f4f6", 
                                                                     color: "#374151",
                                                                     fontWeight: 500,
                                                                     fontSize: "0.75rem"
@@ -415,8 +414,8 @@ const TeacherDash = () => {
                                                 </Box>
                                             </AccordionSummary>
 
-                                            <AccordionDetails sx={{
-                                                backgroundColor: "#fafbfc",
+                                            <AccordionDetails sx={{ 
+                                                backgroundColor: "#fafbfc", 
                                                 borderRadius: "0 0 12px 12px",
                                                 borderTop: "1px solid #e5e7eb"
                                             }}>
@@ -424,15 +423,15 @@ const TeacherDash = () => {
                                                     {/* Topic Details */}
                                                     <Grid container spacing={4}>
                                                         <Grid item xs={12} md={6}>
-                                                            <Box sx={{
-                                                                p: 3,
-                                                                backgroundColor: "white",
+                                                            <Box sx={{ 
+                                                                p: 3, 
+                                                                backgroundColor: "white", 
                                                                 borderRadius: "12px",
                                                                 border: "1px solid #e5e7eb"
                                                             }}>
-                                                                <Typography variant="h6" sx={{
-                                                                    mb: 3,
-                                                                    color: "#111827",
+                                                                <Typography variant="h6" sx={{ 
+                                                                    mb: 3, 
+                                                                    color: "#111827", 
                                                                     fontWeight: 700,
                                                                     display: "flex",
                                                                     alignItems: "center",
@@ -481,15 +480,15 @@ const TeacherDash = () => {
 
                                                         <Grid item xs={12} md={6}>
                                                             {/* Review Status */}
-                                                            <Box sx={{
-                                                                p: 3,
-                                                                backgroundColor: "white",
+                                                            <Box sx={{ 
+                                                                p: 3, 
+                                                                backgroundColor: "white", 
                                                                 borderRadius: "12px",
                                                                 border: "1px solid #e5e7eb"
                                                             }}>
-                                                                <Typography variant="h6" sx={{
-                                                                    mb: 3,
-                                                                    color: "#111827",
+                                                                <Typography variant="h6" sx={{ 
+                                                                    mb: 3, 
+                                                                    color: "#111827", 
                                                                     fontWeight: 700,
                                                                     display: "flex",
                                                                     alignItems: "center",
@@ -497,19 +496,19 @@ const TeacherDash = () => {
                                                                 }}>
                                                                     📊 Review Status
                                                                 </Typography>
-
+                                                                
                                                                 {/* Progress Circle */}
-                                                                <Box sx={{
-                                                                    display: "flex",
-                                                                    flexDirection: "column",
+                                                                <Box sx={{ 
+                                                                    display: "flex", 
+                                                                    flexDirection: "column", 
                                                                     alignItems: "center",
                                                                     mb: 3
                                                                 }}>
-                                                                    <Box sx={{
-                                                                        position: "relative",
-                                                                        width: 80,
-                                                                        height: 80,
-                                                                        mb: 2
+                                                                    <Box sx={{ 
+                                                                        position: "relative", 
+                                                                        width: 80, 
+                                                                        height: 80, 
+                                                                        mb: 2 
                                                                     }}>
                                                                         <svg width="80" height="80" viewBox="0 0 80 80">
                                                                             <circle
@@ -533,17 +532,17 @@ const TeacherDash = () => {
                                                                                 transform="rotate(-90 40 40)"
                                                                             />
                                                                         </svg>
-                                                                        <Box sx={{
-                                                                            position: "absolute",
-                                                                            top: "50%",
-                                                                            left: "50%",
+                                                                        <Box sx={{ 
+                                                                            position: "absolute", 
+                                                                            top: "50%", 
+                                                                            left: "50%", 
                                                                             transform: "translate(-50%, -50%)",
                                                                             textAlign: "center"
                                                                         }}>
-                                                                            <Typography
-                                                                                variant="h6"
-                                                                                sx={{
-                                                                                    fontWeight: 700,
+                                                                            <Typography 
+                                                                                variant="h6" 
+                                                                                sx={{ 
+                                                                                    fontWeight: 700, 
                                                                                     color: getStatusColor(topic.workflow_status),
                                                                                     fontSize: "1rem"
                                                                                 }}
@@ -552,9 +551,9 @@ const TeacherDash = () => {
                                                                             </Typography>
                                                                         </Box>
                                                                     </Box>
-
-                                                                    <Typography variant="body1" sx={{
-                                                                        fontWeight: 600,
+                                                                    
+                                                                    <Typography variant="body1" sx={{ 
+                                                                        fontWeight: 600, 
                                                                         color: "#111827",
                                                                         textAlign: "center"
                                                                     }}>
@@ -581,7 +580,7 @@ const TeacherDash = () => {
                                                                 sx={{
                                                                     borderColor: "#3b82f6",
                                                                     color: "#3b82f6",
-                                                                    "&:hover": {
+                                                                    "&:hover": { 
                                                                         backgroundColor: "#3b82f615",
                                                                         borderColor: "#2563eb"
                                                                     },
@@ -603,7 +602,7 @@ const TeacherDash = () => {
                                                                 sx={{
                                                                     borderColor: "#8b5cf6",
                                                                     color: "#8b5cf6",
-                                                                    "&:hover": {
+                                                                    "&:hover": { 
                                                                         backgroundColor: "#8b5cf615",
                                                                         borderColor: "#7c3aed"
                                                                     },
@@ -662,7 +661,6 @@ const TeacherDash = () => {
                         topic={currentTopic}
                         onFeedbackSubmit={handleFeedbackSubmit}
                         onApprove={handleApproveTopic}
-                        canApprove={canApprove}
                     />
                 </>
             )}

@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { cookies } from "next/headers";
 
 const prisma = new PrismaClient();
 
-import { cookies } from "next/headers";
-
 export async function POST(req) {
+
     try {
-        const { topicId, videoLink, newStatus } = await req.json();
+        const { topicId, videoLink, additionalLink, newStatus } = await req.json(); // ✨ Received additionalLink
         const cookieStore = await cookies();
         const userId = cookieStore.get("userId")?.value;
 
@@ -35,13 +35,18 @@ export async function POST(req) {
 
         console.log(`Updating topic ${id} with videoLink: ${videoLink} and status: ${dbStatus}`);
 
+        const updateData = {
+            videoLink: videoLink,
+            additionalLink: additionalLink, // ✨ Update additional link
+            workflowStatus: dbStatus || "Under_Review",
+            uploadedAt: new Date(), // ✨ Set uploaded timestamp
+            reviewRequestAt: new Date(), // ✨ Set review request timestamp (since it's going to review)
+            ...(userId && { assignedEditorId: parseInt(userId) })
+        };
+
         const updatedTopic = await prisma.contentItem.update({
             where: { id: id },
-            data: {
-                videoLink: videoLink,
-                workflowStatus: dbStatus || "Under_Review",
-                ...(userId && { assignedEditorId: parseInt(userId) }) // ✨ Assign current user
-            },
+            data: updateData,
         });
 
         return NextResponse.json({ success: true, topic: updatedTopic });

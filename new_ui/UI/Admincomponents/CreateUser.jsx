@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Modal,
   Box,
@@ -12,6 +12,9 @@ import {
   Select,
   MenuItem,
   Stack,
+  Checkbox,
+  FormGroup,
+  FormControlLabel
 } from "@mui/material";
 
 const CreateUser = ({ open, onClose }) => {
@@ -20,12 +23,35 @@ const CreateUser = ({ open, onClose }) => {
   const [role, setRole] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isTA, setIsTA] = useState(false);
+  const [isPublisher, setIsPublisher] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [schools, setSchools] = useState([]);
+
+  useEffect(() => {
+    const fetchSchools = async () => {
+      try {
+        const res = await fetch("/api/schools");
+        if (res.ok) {
+          const data = await res.json();
+          setSchools(data || []);
+        }
+      } catch (e) {
+        console.error("Error loading schools:", e);
+      }
+    };
+
+    if (open) fetchSchools();
+  }, [open]);
 
   const handleSubmit = async () => {
     setLoading(true);
 
-    const userData = { name, department, role, email, password };
+    let finalRole = role;
+    if (role === 'teacher' && isTA) finalRole = 'teaching assistant';
+    if (role === 'editor' && isPublisher) finalRole = 'publisher';
+
+    const userData = { name, department, role: finalRole, email, password };
 
     try {
       const res = await fetch("/api/users", {
@@ -35,7 +61,8 @@ const CreateUser = ({ open, onClose }) => {
       });
 
       if (!res.ok) {
-        throw new Error("Failed to create user");
+        const errData = await res.text();
+        throw new Error(errData || "Failed to create user");
       }
 
       const data = await res.json();
@@ -47,11 +74,14 @@ const CreateUser = ({ open, onClose }) => {
       setRole("");
       setEmail("");
       setPassword("");
+      setIsTA(false);
+      setIsPublisher(false);
 
-      onClose(); // close modal after success
+      onClose();
+      if (window.location.reload) window.location.reload();
     } catch (error) {
       console.error(error);
-      alert("Error creating user!");
+      alert("Error creating user: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -91,7 +121,11 @@ const CreateUser = ({ open, onClose }) => {
               label="Department"
               onChange={(e) => setDepartment(e.target.value)}
             >
-             
+              {schools.map((school) => (
+                <MenuItem key={school.id} value={school.id}>
+                  {school.name}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
 
@@ -100,13 +134,29 @@ const CreateUser = ({ open, onClose }) => {
             <Select
               value={role}
               label="Role"
-              onChange={(e) => setRole(e.target.value)}
+              onChange={(e) => {
+                setRole(e.target.value);
+                setIsTA(false);
+                setIsPublisher(false);
+              }}
             >
               <MenuItem value="teacher">Teacher</MenuItem>
               <MenuItem value="admin">Admin</MenuItem>
               <MenuItem value="editor">Editor</MenuItem>
             </Select>
           </FormControl>
+
+          {role === 'teacher' && (
+            <FormGroup>
+              <FormControlLabel control={<Checkbox checked={isTA} onChange={(e) => setIsTA(e.target.checked)} />} label="Is Teaching Assistant?" />
+            </FormGroup>
+          )}
+
+          {role === 'editor' && (
+            <FormGroup>
+              <FormControlLabel control={<Checkbox checked={isPublisher} onChange={(e) => setIsPublisher(e.target.checked)} />} label="Is Publisher?" />
+            </FormGroup>
+          )}
 
           <TextField
             fullWidth

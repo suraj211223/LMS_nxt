@@ -198,8 +198,9 @@ export default function CourseStructureDesign() {
   };
 
   const userRole = course.userRole;
-  const canApprove = userRole === "Teacher Assistant";
-  const canOverwrite = userRole === "Teacher Assistant";
+  // Robust check for TA/Teacher role to enable features
+  const canApprove = ['Teacher', 'Teaching Assistant', 'Teacher Assistant', 'teacher', 'teaching assistant'].includes(userRole);
+  const canOverwrite = canApprove;
 
   return (
     <div className="space-y-6 p-6">
@@ -488,9 +489,24 @@ export default function CourseStructureDesign() {
         open={Boolean(downloadAnchorEl)}
         onClose={handleDownloadMenuClose}
       >
-        <MenuItem onClick={() => downloadFile('ppt')}>Download PPT</MenuItem>
-        <MenuItem onClick={() => downloadFile('doc')}>Download Doc/PDF</MenuItem>
-        <MenuItem onClick={() => downloadFile('zip')}>Download Zip/Other</MenuItem>
+        <MenuItem
+          onClick={() => downloadFile('ppt')}
+          disabled={!activeDownloadTopic?.script?.ppt}
+        >
+          Download PPT
+        </MenuItem>
+        <MenuItem
+          onClick={() => downloadFile('doc')}
+          disabled={!activeDownloadTopic?.script?.doc}
+        >
+          Download Doc/PDF
+        </MenuItem>
+        <MenuItem
+          onClick={() => downloadFile('zip')}
+          disabled={!activeDownloadTopic?.script?.zip}
+        >
+          Download Zip/Other
+        </MenuItem>
       </Menu>
 
       <ReviewDialogue

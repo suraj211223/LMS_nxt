@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import prisma from "../../../../../../../lib/prisma";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export async function POST(req) {
   try {
@@ -13,7 +15,7 @@ export async function POST(req) {
     }
 
     const school = await prisma.school.findUnique({
-      where: { id: school_id },
+      where: { id: parseInt(school_id) },
     });
 
     if (!school) {
@@ -25,7 +27,7 @@ export async function POST(req) {
 
     await prisma.program.create({
       data: {
-        schoolId: school_id,
+        schoolId: parseInt(school_id),
         programName: program_name,
         programCode: program_code,
       },

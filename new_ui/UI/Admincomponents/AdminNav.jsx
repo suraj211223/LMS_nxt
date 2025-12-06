@@ -3,7 +3,7 @@
 import React, { use, useState } from "react";
 import { AppBar, Toolbar, Drawer, InputBase, Box } from "@mui/material";
 import { Search, Menu } from "@mui/icons-material";
-import { LogOut } from "lucide-react"; // Lucide Signout Icon
+import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const AdminNav = () => {
@@ -19,33 +19,31 @@ const AdminNav = () => {
   };
 
   const router = useRouter();
+
+  const handleLogout = () => {
+    document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+    document.cookie = "userId=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+    router.push('/');
+  };
+
   return (
     <>
       <AppBar position="fixed">
         <Toolbar className="flex justify-between bg-gray-50 text-black">
-
-          {/* Menu Icon */}
           <Menu
             className="text-3xl cursor-pointer"
             onClick={() => toggleDrawer(true)}
           />
-
-          {/* Search Box */}
           <div className="flex flex-row items-center border-2 border-gray-400 px-2 py-1 m-2 rounded-md">
-            <Search/>
+            <Search />
             <InputBase className="pl-2" placeholder="Search..." />
           </div>
         </Toolbar>
       </AppBar>
 
-      {/* Drawer */}
       <Drawer anchor="left" open={open} onClose={() => toggleDrawer(false)}>
         <Box className="w-64 h-full flex flex-col p-4 text-lg">
-
-          {/* TOP SECTION */}
           <div className="flex flex-col gap-5">
-
-            {/* Profile */}
             <div className="flex flex-col items-center justify-center py-6">
               <img
                 className="w-20 h-20 rounded-full shadow-md"
@@ -54,44 +52,52 @@ const AdminNav = () => {
               <p className="py-2 text-2xl font-semibold">Hi Admin</p>
             </div>
 
-            {/* Menu Buttons */}
             <button
-              className={`rounded-xl px-3 py-2 transition-all duration-200 ${
-                active === 1 
-                  ? "bg-black text-white" 
-                  : "bg-white text-black hover:bg-gray-200"
-              }`}
-              onClick={() => {isactive(1); router.push(`/admin/dashboard`)}}
+              className={`rounded-xl px-3 py-2 transition-all duration-200 ${active === 1
+                ? "bg-black text-white"
+                : "bg-white text-black hover:bg-gray-200"
+                }`}
+              onClick={() => { isactive(1); router.push(`/admin/dashboard`) }}
             >
               Dashboard
             </button>
-          
+
             <button
-              className={`rounded-xl px-3 py-2 transition-all duration-200 ${
-                active === 2 
-                  ? "bg-black text-white" 
-                  : "bg-white text-black hover:bg-gray-200"
-              }`}
-              onClick={()=>{router.push(`/admin/courses`); isactive(2);}}
+              className={`rounded-xl px-3 py-2 transition-all duration-200 ${active === 4
+                ? "bg-black text-white"
+                : "bg-white text-black hover:bg-gray-200"
+                }`}
+              onClick={() => { router.push(`/admin/schools`); isactive(4); }}
+            >
+              Schools
+            </button>
+
+            <button
+              className={`rounded-xl px-3 py-2 transition-all duration-200 ${active === 2
+                ? "bg-black text-white"
+                : "bg-white text-black hover:bg-gray-200"
+                }`}
+              onClick={() => { router.push(`/admin/courses`); isactive(2); }}
             >
               Courses
             </button>
 
-             <button
-              className={`rounded-xl px-3 py-2 transition-all duration-200 ${
-                active === 3 
-                  ? "bg-black text-white" 
-                  : "bg-white text-black hover:bg-gray-200"
-              }`}
-              onClick={()=>{router.push(`/admin/programs`); isactive(3);}}
+            <button
+              className={`rounded-xl px-3 py-2 transition-all duration-200 ${active === 3
+                ? "bg-black text-white"
+                : "bg-white text-black hover:bg-gray-200"
+                }`}
+              onClick={() => { router.push(`/admin/programs`); isactive(3); }}
             >
               Programs
             </button>
           </div>
 
-          {/* SIGN OUT BUTTON AT BOTTOM */}
           <div className="mt-auto">
-            <button className="flex items-center gap-2 rounded-xl px-3 py-2 text-red-500 hover:bg-red-100 transition-all duration-200">
+            <button
+              className="flex items-center gap-2 rounded-xl px-3 py-2 text-red-500 hover:bg-red-100 transition-all duration-200"
+              onClick={handleLogout}
+            >
               <LogOut size={20} /> Sign Out
             </button>
           </div>

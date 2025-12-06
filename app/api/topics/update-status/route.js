@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { cookies } from "next/headers";
 
 const prisma = new PrismaClient();
 
@@ -21,9 +22,25 @@ export async function POST(request) {
       workflowStatus: dbStatus,
     };
 
+    // ✨ Update Timestamps based on status
+    if (newStatus === "Approved") {
+      updateData.approvedAt = new Date();
+    }
+    if (newStatus === "Published") {
+      updateData.publishedAt = new Date();
+    }
+
+    // If Reversing (Admin or Mistake Correction), clear future timestamps
+    // e.g. if going back to Draft/Planned, it's not Published anymore
+    if (newStatus !== "Published") {
+      updateData.publishedAt = null;
+    }
+    if (newStatus !== "Published" && newStatus !== "Approved") {
+      updateData.approvedAt = null;
+    }
+
     // If moving to Post-Editing (Start Recording), assign the current user IF they are an Editor
-    if (newStatus === "Post-Editing") {
-      const { cookies } = await import("next/headers");
+    if (newStatus === "Post-Editing" || newStatus === "Post_Editing") {
       const cookieStore = await cookies();
       const userId = cookieStore.get("userId")?.value;
 

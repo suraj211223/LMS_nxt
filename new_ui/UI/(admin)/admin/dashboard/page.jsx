@@ -18,8 +18,10 @@ import {
   InputAdornment,
   Button
 } from "@mui/material";
-import { Edit, Delete, Search, Sort, Add } from "@mui/icons-material";
-import CreateUser from "../../../client/Admincomponents/CreateUser";
+import { Edit, Delete, Search, Sort, Add, Link as LinkIcon } from "@mui/icons-material";
+// Correct imports relative to new_ui/UI/(admin)/admin/dashboard
+import CreateUser from "../../../Admincomponents/CreateUser";
+import AssignCourse from "../../../Admincomponents/AssignCourse";
 
 const AdminDash = () => {
   const [stats, setStats] = useState({
@@ -29,7 +31,8 @@ const AdminDash = () => {
     programs: 0,
     topics: 0
   });
-  const [open,setopen]=useState(false);
+  const [open, setOpen] = useState(false);
+  const [openAssign, setOpenAssign] = useState(false);
   const [teachersList, setTeachersList] = useState([]);
   const [filteredTeachers, setFilteredTeachers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -68,22 +71,39 @@ const AdminDash = () => {
   const handleSearchChange = (event) => {
     const query = event.target.value.toLowerCase();
     setSearchQuery(query);
-    
+
     const filtered = teachersList.filter((teacher) =>
       (teacher.name || '').toLowerCase().includes(query) ||
       (teacher.email || '').toLowerCase().includes(query) ||
       (teacher.role || '').toLowerCase().includes(query)
     );
-    
+
     setFilteredTeachers(filtered);
   };
 
   // Sort functionality
   const handleSort = () => {
-    const sorted = [...filteredTeachers].sort((a, b) => 
+    const sorted = [...filteredTeachers].sort((a, b) =>
       (a.name || '').localeCompare(b.name || '')
     );
     setFilteredTeachers(sorted);
+  };
+
+  const handleDeleteUser = async (id) => {
+    if (!confirm("Are you sure you want to delete this user? This cannot be undone.")) return;
+
+    try {
+      const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        alert("User deleted");
+        fetchDashboardData();
+      } else {
+        alert("Failed to delete user");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error deleting user");
+    }
   };
 
   useEffect(() => {
@@ -133,10 +153,10 @@ const AdminDash = () => {
                     }
                   }}
                 >
-                  <Typography 
-                    variant="h6" 
-                    sx={{ 
-                      color: item.color, 
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      color: item.color,
                       fontWeight: 600,
                       textAlign: "center",
                       fontSize: "1rem",
@@ -145,10 +165,10 @@ const AdminDash = () => {
                   >
                     {item.label}
                   </Typography>
-                  <Typography 
-                    variant="h3" 
-                    sx={{ 
-                      color: "#000", 
+                  <Typography
+                    variant="h3"
+                    sx={{
+                      color: "#000",
                       fontWeight: 700,
                       fontSize: "2.5rem"
                     }}
@@ -162,54 +182,74 @@ const AdminDash = () => {
 
           {/* TEACHERS TABLE */}
           <Box sx={{ mx: 20, mt: 8 }}>
-            {/* HEADER WITH TITLE AND ADD BUTTON */}
-            <Box sx={{ 
-              display: "flex", 
-              justifyContent: "space-between", 
-              alignItems: "center", 
-              mb: 3 
+            {/* HEADER WITH TITLE AND ADD BUTTONS */}
+            <Box sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 3
             }}>
               <Typography variant="h4" sx={{ fontWeight: 600, color: "#374151" }}>
                 Users List
               </Typography>
-              <Button
-                startIcon={<Add />}
-                onClick={() => {
-                  // Add new teacher functionality
-                  console.log('Add new teacher');
-                  setopen(true)
-                }}
-                sx={{
-                  backgroundColor: "#000",
-                  color: "#fff",
-                  px: 3,
-                  py: 1.5,
-                  borderRadius: "12px",
-                  textTransform: "none",
-                  fontWeight: 600,
-                  "&:hover": {
-                    backgroundColor: "#374151",
-                  }
-                }}
-              >
-                Add User
-              </Button>
-              <CreateUser open={open} onClose={()=>setopen(false)}/>
+
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <Button
+                  startIcon={<LinkIcon />}
+                  onClick={() => setOpenAssign(true)}
+                  sx={{
+                    backgroundColor: "#fff",
+                    color: "#000",
+                    border: "1px solid #e5e7eb",
+                    px: 3,
+                    py: 1.5,
+                    borderRadius: "12px",
+                    textTransform: "none",
+                    fontWeight: 600,
+                    "&:hover": {
+                      backgroundColor: "#f9fafb",
+                    }
+                  }}
+                >
+                  Assign Course
+                </Button>
+                <Button
+                  startIcon={<Add />}
+                  onClick={() => setOpen(true)}
+                  sx={{
+                    backgroundColor: "#000",
+                    color: "#fff",
+                    px: 3,
+                    py: 1.5,
+                    borderRadius: "12px",
+                    textTransform: "none",
+                    fontWeight: 600,
+                    "&:hover": {
+                      backgroundColor: "#374151",
+                    }
+                  }}
+                >
+                  Add User
+                </Button>
+              </Box>
+
+              <CreateUser open={open} onClose={() => { setOpen(false); fetchDashboardData(); }} />
+              <AssignCourse open={openAssign} onClose={() => setOpenAssign(false)} />
             </Box>
 
             {/* TABLE CONTAINER WITH SEARCH */}
-            <Paper sx={{ 
-              p: 3, 
-              borderRadius: "16px", 
+            <Paper sx={{
+              p: 3,
+              borderRadius: "16px",
               boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
               border: "1px solid rgba(0,0,0,0.05)"
             }}>
               {/* SEARCH BAR */}
-              <Box sx={{ 
-                display: "flex", 
-               
-                alignItems: "center", 
-                gap: 90, 
+              <Box sx={{
+                display: "flex",
+
+                alignItems: "center",
+                gap: 2,
                 mb: 3,
                 pb: 2,
                 borderBottom: "1px solid rgba(0,0,0,0.1)"
@@ -219,10 +259,9 @@ const AdminDash = () => {
                   value={searchQuery}
                   onChange={handleSearchChange}
                   variant="outlined"
-                  size="20px"
-                  sx={{ 
-                    flexGrow: 0.3,
-                    width: "small",
+                  size="small"
+                  sx={{
+                    width: 300,
                     "& .MuiOutlinedInput-root": {
                       borderRadius: "12px",
                     }
@@ -235,9 +274,9 @@ const AdminDash = () => {
                     ),
                   }}
                 />
-                <IconButton 
+                <IconButton
                   onClick={handleSort}
-                  sx={{ 
+                  sx={{
                     backgroundColor: "#f3f4f6",
                     "&:hover": { backgroundColor: "#e5e7eb" },
                     borderRadius: "12px"
@@ -248,8 +287,8 @@ const AdminDash = () => {
               </Box>
 
               {/* TABLE WITH SCROLL */}
-              <TableContainer sx={{ 
-                maxHeight: 500, 
+              <TableContainer sx={{
+                maxHeight: 500,
                 overflow: 'auto',
                 '&::-webkit-scrollbar': {
                   width: '8px',
@@ -280,9 +319,9 @@ const AdminDash = () => {
                   <TableBody>
                     {filteredTeachers.length > 0 ? (
                       filteredTeachers.map((teacher) => (
-                        <TableRow 
+                        <TableRow
                           key={teacher.id}
-                          sx={{ 
+                          sx={{
                             "&:hover": { backgroundColor: "#f9fafb" },
                             transition: "background-color 0.2s ease"
                           }}
@@ -305,27 +344,11 @@ const AdminDash = () => {
 
                           <TableCell align="right">
                             <div className="flex gap-1 justify-end">
-                              <IconButton 
-                                color="primary" 
+                              <IconButton
+                                color="error"
                                 size="small"
-                                onClick={() => {
-                                  // Add edit functionality here
-                                  console.log('Edit teacher:', teacher.id);
-                                }}
-                                sx={{ 
-                                  "&:hover": { backgroundColor: "rgba(25, 118, 210, 0.1)" }
-                                }}
-                              >
-                                <Edit fontSize="small" />
-                              </IconButton>
-                              <IconButton 
-                                color="error" 
-                                size="small"
-                                onClick={() => {
-                                  // Add delete functionality here
-                                  console.log('Delete teacher:', teacher.id);
-                                }}
-                                sx={{ 
+                                onClick={() => handleDeleteUser(teacher.id)}
+                                sx={{
                                   "&:hover": { backgroundColor: "rgba(211, 47, 47, 0.1)" }
                                 }}
                               >

@@ -40,6 +40,7 @@ model School {
   name String  @unique @map("school_name")
 
   programs Program[]
+  users User[]
 
   @@map("schools")
 }
@@ -77,8 +78,11 @@ model User {
   passwordHash String  @map("password_hash")
   firstName    String? @map("first_name")
   lastName     String? @map("last_name")
-
+  
+  schoolId     Int?    @map("school_id")
+  
   role Role @relation(fields: [roleId], references: [id])
+  school School? @relation(fields: [schoolId], references: [id])
 
   // relations
   uploadedMaterials UnitMaterial[] @relation("uploadedMaterials")
@@ -148,11 +152,19 @@ model ContentItem {
   learningObjectives    String? @map("learning_objectives")
   workflowStatus        WorkflowStatus @default(Planned) @map("workflow_status")
   videoLink             String? @map("video_link")
+  additionalLink        String? @map("additional_link") 
   reviewNotes           String? @map("review_notes")
   uploadedByEditorId    Int?    @map("uploaded_by_editor_id")
   assignedEditorId      Int?    @map("assigned_editor_id")
   practiceQuestionsUrl  String? @map("practice_questions_url")
   referenceMaterialUrl  String? @map("reference_material_url")
+
+  // Timestamps
+  createdAt             DateTime @default(now()) @map("created_at")
+  uploadedAt            DateTime? @map("uploaded_at")
+  reviewRequestAt       DateTime? @map("review_request_at")
+  approvedAt            DateTime? @map("approved_at")
+  publishedAt           DateTime? @map("published_at")
 
   section CourseSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   contentscript Contentscript?

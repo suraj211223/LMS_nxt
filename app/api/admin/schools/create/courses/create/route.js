@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
-import prisma from "../../../../../../../lib/prisma";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { program_id, course_code, title, status } = body;
+    const { program_id, course_code, title } = body;
 
+    // Remove status from input if not needed, as schema sets default
     if (!program_id || !course_code || !title) {
       return NextResponse.json(
         { error: "Missing required fields" },
@@ -15,10 +18,10 @@ export async function POST(req) {
 
     const course = await prisma.course.create({
       data: {
-        programId: program_id,
+        programId: parseInt(program_id), // Parsing int
         title: title,
         courseCode: course_code,
-        status: status || "Active",
+        // status: "Active" // Prisma default 'Active' will take over
       },
     });
 

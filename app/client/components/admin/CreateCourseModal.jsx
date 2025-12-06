@@ -15,46 +15,62 @@ import {
 const CreateCourseModal = ({ open, onClose }) => {
   const [courseName, setCourseName] = useState("");
   const [courseCode, setCourseCode] = useState("");
-
-  const [schools, setSchools] = useState([]);
   const [programs, setPrograms] = useState([]);
-  const [faculties, setFaculties] = useState([]);
-
-  const [selectedSchool, setSelectedSchool] = useState(null);
   const [selectedProgram, setSelectedProgram] = useState(null);
-  const [selectedFaculties, setSelectedFaculties] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const fetchOptions = async () => {
+    const fetchPrograms = async () => {
       try {
-        const [programRes, facultyRes] = await Promise.all([
-          fetch("/api/program/list"),
-          fetch("/api/faculty/list"), // <-- your faculty API
-        ]);
-
-        const programsData = await programRes.json();
-        const facultiesData = await facultyRes.json();
-
-        setPrograms(programsData || []);
-        setFaculties(facultiesData || []);
+        const res = await fetch("/api/programs");
+        if (res.ok) {
+          const data = await res.json();
+          setPrograms(data || []);
+        }
       } catch (e) {
-        console.error("Error fetching:", e);
+        console.error("Error fetching programs:", e);
       }
     };
 
-    if (open) fetchOptions();
+    if (open) fetchPrograms();
   }, [open]);
 
   const handleSubmit = async () => {
-    const data = {
+    if (!selectedProgram || !courseName || !courseCode) {
+      alert("Please fill all fields");
+      return;
+    }
+
+    setLoading(true);
+
+    const payload = {
       title: courseName,
       course_code: courseCode,
-      program_id: selectedProgram?.program_id || null,
-      faculty_ids: selectedFaculties.map((f) => f.faculty_id), // selected faculty IDs
+      program_id: selectedProgram.id, // Using correct ID from schema
     };
 
-    console.log("Payload:", data);
-    onClose();
+    try {
+      const res = await fetch("/api/admin/schools/create/courses/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to create course");
+      }
+
+      alert("Course created successfully!");
+      onClose();
+      if (window.location.reload) window.location.reload();
+
+    } catch (e) {
+      console.error(e);
+      alert(e.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -98,54 +114,18 @@ const CreateCourseModal = ({ open, onClose }) => {
             options={programs}
             value={selectedProgram}
             onChange={(e, newValue) => setSelectedProgram(newValue)}
-            getOptionLabel={(opt) => opt?.program_name ?? ""}
+            getOptionLabel={(opt) => opt.programName || ""}
             isOptionEqualToValue={(opt, val) =>
-              opt?.program_id === val?.program_id
+              opt.id === val?.id
             }
             renderInput={(params) => (
-              <TextField {...params} label="Program" />
-            )}
-          />
-
-          {/* Faculty Autocomplete (multiple, max 3) */}
-          <Autocomplete
-            multiple
-            options={faculties}
-            value={selectedFaculties}
-            getOptionLabel={(opt) => opt?.faculty_name ?? ""}
-            isOptionEqualToValue={(opt, val) =>
-              opt?.faculty_id === val?.faculty_id
-            }
-            onChange={(e, newValue) => {
-              if (newValue.length <= 3) {
-                setSelectedFaculties(newValue);
-              }
-            }}
-            renderTags={(value, getTagProps) =>
-              value.map((option, index) => (
-                <Chip
-                  {...getTagProps({ index })}
-                  key={option.faculty_id}
-                  label={option.faculty_name}
-                />
-              ))
-            }
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Select Faculties (Max 3)"
-                helperText={
-                  selectedFaculties.length === 3
-                    ? "Maximum 3 faculties selected"
-                    : ""
-                }
-              />
+              <TextField {...params} label="Select Program" />
             )}
           />
 
           {/* Submit Button */}
-          <Button variant="contained" onClick={handleSubmit}>
-            Create Course
+          <Button variant="contained" onClick={handleSubmit} disabled={loading}>
+            {loading ? "Creating..." : "Create Course"}
           </Button>
         </Stack>
       </Box>
