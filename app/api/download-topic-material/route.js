@@ -27,30 +27,31 @@ export async function GET(req) {
             include: { section: true }
         });
 
-        const unitIndex = topic?.section?.orderIndex || 0;
+        // --- Calculate Filename ---
+        // 1. Unit Number (from Section Order Index)
+        const unitNum = (topic.section.orderIndex || 0).toString().padStart(2, "0");
 
-        let topicIndex = 0;
-        if (topic && topic.section) {
-            const topics = await prisma.contentItem.findMany({
-                where: { sectionId: topic.section.id },
-                orderBy: { id: 'asc' },
-                select: { id: true }
-            });
-            topicIndex = topics.findIndex(t => t.id === parseInt(topicId)) + 1;
-        }
+        // 2. Topic Number (Calculated by counting topics in the same section with lower IDs)
+        // We need to count topics to get the correct index 1..N
+        const prevTopicsCount = await prisma.contentItem.count({
+            where: {
+                sectionId: topic.sectionId,
+                id: { lt: parseInt(topicId) },
+            },
+        });
+        const topicNum = (prevTopicsCount + 1).toString().padStart(2, "0");
 
-        const unitNumber = unitIndex;
-        const topicNumber = topicIndex;
-        const topicName = topic.title || "Topic";
-        const profName = topic.section?.profName || "Prof";
+        // 3. Topic Name & Teacher Name
+        const topicName = topic.title || "Untitled";
+        const teacherName = topic.section.profName || "Unknown";
 
-        // Sanitize filename to remove invalid characters
-        const sanitize = (str) => str.replace(/[^a-zA-Z0-9 \-_]/g, "").trim();
+        const safeTopic = topicName.replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "_");
+        const safeTeacher = teacherName.replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "_");
 
-        const filenameBase = `U_${String(unitNumber).padStart(2, '0')}V_${String(topicNumber).padStart(2, '0')} - ${sanitize(topicName)} - ${sanitize(profName)}`;
+        const filenameBase = `U${unitNum}V${topicNum}_${safeTopic}_${safeTeacher}`;
 
         let fileData = null;
-        let filename = `${filenameBase}.${type}`;
+        let filename = "";
         let contentType = "application/octet-stream";
 
         if (type === "ppt") {
@@ -59,11 +60,11 @@ export async function GET(req) {
             contentType = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
         } else if (type === "doc") {
             fileData = script.docFileData;
-            filename = `${filenameBase}.docx`;
-            contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            filename = `${filenameBase}.pdf`; // Defaulting to pdf as per user preference in other route
+            contentType = "application/pdf";
         } else if (type === "zip") {
             fileData = script.zipFileData;
-            filename = `${filenameBase}-materials.zip`;
+            filename = `${filenameBase}.zip`;
             contentType = "application/zip";
         }
 

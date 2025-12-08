@@ -16,12 +16,20 @@ export async function POST(req) {
         const courseMaterialFile = form.get("courseMaterial");
         const referenceFiles = form.getAll("referenceMaterials"); // Get all files
 
+        // Get User from Cookie
+        const { cookies } = require("next/headers");
+        const cookieStore = await cookies();
+        const userIdCookie = cookieStore.get("userId");
+        const userId = userIdCookie?.value;
+
         if (!topicId || isNaN(parseInt(topicId))) {
             return NextResponse.json(
                 { error: "Invalid or missing topicId" },
                 { status: 400 }
             );
         }
+
+        const topicIdInt = parseInt(topicId);
 
         // Prepare file buffers
         let pptFileData = null;
@@ -56,29 +64,68 @@ export async function POST(req) {
 
         // Upsert Contentscript
         await prisma.contentscript.upsert({
-            where: { contentId: parseInt(topicId) },
+            where: { contentId: topicIdInt },
             update: {
                 ...(pptFileData && { pptFileData }),
                 ...(docFileData && { docFileData }),
                 ...(zipFileData && { zipFileData }),
             },
             create: {
-                contentId: parseInt(topicId),
+                contentId: topicIdInt,
                 pptFileData,
                 docFileData,
                 zipFileData,
             },
         });
 
+        // -------------------------------------------------------------
+        // LOGIC: Set Teacher Name if missing ("one who uploads first")
+        // -------------------------------------------------------------
+        if (userId) {
+            // 1. Get Uploader Name
+            const uploader = await prisma.user.findUnique({
+                where: { id: parseInt(userId) },
+                select: { firstName: true, lastName: true }
+            });
+
+            if (uploader) {
+                const teacherName = `${uploader.firstName || ""} ${uploader.lastName || ""}`.trim();
+
+                // 2. Find the Section ID for this Topic
+                const topicItem = await prisma.contentItem.findUnique({
+                    where: { id: topicIdInt },
+                    select: { sectionId: true }
+                });
+
+                if (topicItem) {
+                    // 3. Check if profName is already set
+                    const section = await prisma.courseSection.findUnique({
+                        where: { id: topicItem.sectionId },
+                        select: { profName: true }
+                    });
+
+                    // 4. Update ONLY if empty/null
+                    if (!section?.profName) {
+                        await prisma.courseSection.update({
+                            where: { id: topicItem.sectionId },
+                            data: { profName: teacherName }
+                        });
+                        console.log(`Updated profName for Section ${topicItem.sectionId} to: ${teacherName}`);
+                    }
+                }
+            }
+        }
+
+        // Update Workflow Status
         const topic = await prisma.contentItem.findUnique({
-            where: { id: parseInt(topicId) },
+            where: { id: topicIdInt },
             select: { workflowStatus: true }
         });
 
         if (topic && topic.workflowStatus === 'Planned') {
             await prisma.contentItem.update({
-                where: { id: parseInt(topicId) },
-                data: { workflowStatus: 'Scripted' } // ✨ Changed to Scripted (Pending Approval)
+                where: { id: topicIdInt },
+                data: { workflowStatus: 'Scripted' }
             });
         }
 

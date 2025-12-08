@@ -69,7 +69,7 @@ export default function LoginPage() {
             variant="h3"
             sx={{ fontWeight: "bold", mb: 8, color: "#000" }}
           >
-            WELCOME TO LMS
+            WELCOME TO VL PRO
           </Typography>
 
           {/* Error */}
@@ -181,7 +181,7 @@ export default function LoginPage() {
             display="block"
             sx={{ mt: 4, color: "gray" }}
           >
-            Learning Management System © 2025
+            VL PRO Learning Management System © 2025
           </Typography>
         </Box>
       </Box>

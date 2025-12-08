@@ -516,6 +516,27 @@ const EditorDash = () => {
                                   </IconButton>
                                 </Tooltip>
                               )}
+                              {/* View Links Button - Show only if links exist (Approved) */}
+                              {(topic.workflow_status === 'Approved') && (
+                                <Tooltip title="View Current Links">
+                                  <IconButton
+                                    size="medium"
+                                    sx={{
+                                      backgroundColor: "#0ea5e9",
+                                      color: "white",
+                                      "&:hover": { backgroundColor: "#0284c7" }
+                                    }}
+                                    onClick={() => {
+                                      setCurrentTopic(topic);
+                                      setVideoLink(topic.video_link || "");
+                                      setAdditionalLink(topic.additional_link || "");
+                                      setUploadModalOpen(true);
+                                    }}
+                                  >
+                                    <Visibility />
+                                  </IconButton>
+                                </Tooltip>
+                              )}
                             </Box>
 
                             {/* Feedback Button - Only show if review notes exist */}
@@ -618,11 +639,11 @@ const EditorDash = () => {
             fullWidth
           >
             <DialogTitle sx={{ fontWeight: 600, color: "#374151" }}>
-              Upload Video Link
+              {currentTopic?.workflow_status === 'Approved' || currentTopic?.workflow_status === 'Under_Review' ? "View/Edit Links" : "Upload Video Link"}
             </DialogTitle>
             <DialogContent>
               <Typography variant="body2" sx={{ color: "#6b7280", mb: 3 }}>
-                Upload the video link for: <strong>{currentTopic?.topic_title}</strong>
+                {currentTopic?.workflow_status === 'Approved' ? "Current links for:" : "Upload the video link for:"} <strong>{currentTopic?.topic_title}</strong>
               </Typography>
               <TextField
                 autoFocus
@@ -664,19 +685,20 @@ const EditorDash = () => {
                 variant="outlined"
                 sx={{ borderRadius: "8px" }}
               >
-                Cancel
+                Close
               </Button>
               <Button
                 onClick={handleVideoUpload}
                 variant="contained"
-                disabled={!videoLink}
-                startIcon={<Upload />}
+                disabled={!videoLink || currentTopic?.workflow_status === 'Approved'}
+                startIcon={currentTopic?.workflow_status === 'Approved' ? <Visibility /> : <Upload />}
                 sx={{
                   borderRadius: "8px",
-                  fontWeight: 600
+                  fontWeight: 600,
+                  display: currentTopic?.workflow_status === 'Approved' ? 'none' : 'flex' // Hide save on approved
                 }}
               >
-                Upload Video
+                {currentTopic?.workflow_status === 'Under_Review' ? "Update Links" : "Upload Video"}
               </Button>
             </DialogActions>
           </Dialog>
