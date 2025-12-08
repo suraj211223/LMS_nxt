@@ -133,8 +133,6 @@ const AdminDash = () => {
               { label: "Teachers", value: stats.teachers, bg: "rgba(34,197,94,0.1)", color: "#15803d", borderColor: "#22c55e" },
               { label: "Total Editors", value: stats.editors, bg: "rgba(251,146,60,0.1)", color: "#c2410c", borderColor: "#fb923c" },
               { label: "Total Programs", value: stats.programs, bg: "rgba(168,85,247,0.1)", color: "#7c2d12", borderColor: "#a855f7", link: "/admin/programs" },
-              { label: "Editors", value: stats.editors, bg: "rgba(251,146,60,0.1)", color: "#c2410c", borderColor: "#fb923c" },
-              { label: "Total Programs", value: stats.programs, bg: "rgba(168,85,247,0.1)", color: "#7c2d12", borderColor: "#a855f7" },
               { label: "Total Topics", value: stats.topics, bg: "rgba(6,182,212,0.1)", color: "#0e7490", borderColor: "#06b6d4" },
             ].map((item, index) => (
               <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }} key={index}>

@@ -64,7 +64,9 @@ const ScriptDialogue = ({ open, onClose, topic, onUploadSuccess }) => {
     formData.append("topicId", topic.content_id);
 
     // Updated naming scheme: U{unit}V{topic}
-    const topicPrefix = `U${topic.unitIndex + 1}V${topic.topicIndex + 1}`;
+    const unitPadded = (topic.unitIndex + 1).toString().padStart(2, "0");
+    const topicPadded = (topic.topicIndex + 1).toString().padStart(2, "0");
+    const topicPrefix = `U${unitPadded}V${topicPadded}`;
     formData.append("topicPrefix", topicPrefix);
 
     try {
