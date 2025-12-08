@@ -22,6 +22,7 @@ export async function GET() {
     const teachers = teacherRoleIds.length > 0 ? await prisma.user.count({ where: { roleId: { in: teacherRoleIds } } }) : 0;
     const editors = editorRoleIds.length > 0 ? await prisma.user.count({ where: { roleId: { in: editorRoleIds } } }) : 0;
 
+    const schools = await prisma.school.count();
     const programs = await prisma.program.count();
     const topics = await prisma.contentItem.count();
 
@@ -46,6 +47,7 @@ export async function GET() {
         totalUsers,
         teachers,
         editors,
+        schools,
         programs,
         topics,
       },
