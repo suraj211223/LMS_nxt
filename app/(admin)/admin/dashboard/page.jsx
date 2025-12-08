@@ -143,8 +143,7 @@ const AdminDash = () => {
                   sx={{
                     p: 3,
                     cursor: item.link ? 'pointer' : 'default',
-                  sx={{
-                    p: 3,
+
                     border: `2px solid ${item.borderColor}`,
                     borderRadius: "16px",
                     background: `linear-gradient(135deg, ${item.bg} 0%, rgba(255,255,255,0.9) 100%)`,
