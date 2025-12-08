@@ -10,6 +10,8 @@
     "prisma:db-pull": "prisma db pull",
     "prisma:migrate": "prisma migrate dev --name",
     "prisma:seed": "node prisma/seed.js",
+    "seed": "node prisma/seed.js",
+    "postinstall": "prisma generate"
     "seed": "node prisma/seed.js"
   },
   "dependencies": {

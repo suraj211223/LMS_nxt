@@ -2,6 +2,16 @@
 import React from 'react';
 import { Card, CardContent, Typography, Chip, Box, IconButton } from '@mui/material';
 import { Trash2 } from 'lucide-react';
+import { useRouter } from "next/navigation";
+
+const AdminProgramcard = ({ id, programName, programCode, schoolName }) => {
+  const router = useRouter();
+  return (
+    <Card
+      className="h-full transition-all duration-300 hover:shadow-lg  cursor-pointer border-l-4 border-l-blue-500"
+      onClick={() => {
+        // Navigate to courses page with program filter
+        router.push(`/admin/courses?program=${encodeURIComponent(programName)}`);
 
 const AdminProgramcard = ({ id, programName, programCode, schoolName }) => {
   return (
@@ -16,6 +26,9 @@ const AdminProgramcard = ({ id, programName, programCode, schoolName }) => {
         <Box className="flex flex-col h-full">
           {/* Program Header */}
           <Box className="flex justify-between items-center mb-3">
+            <Typography
+              variant="h6"
+              component="h3"
             <Typography 
               variant="h6" 
               component="h3" 
@@ -23,6 +36,7 @@ const AdminProgramcard = ({ id, programName, programCode, schoolName }) => {
             >
               {programName}
             </Typography>
+            <IconButton
             <IconButton 
               size="small"
               onClick={(e) => {
@@ -45,6 +59,7 @@ const AdminProgramcard = ({ id, programName, programCode, schoolName }) => {
 
           {/* Program Code */}
           <Box className="flex items-center gap-2 mb-3">
+            <Chip
             <Chip 
               label={programCode}
               size="small"
@@ -56,6 +71,8 @@ const AdminProgramcard = ({ id, programName, programCode, schoolName }) => {
 
           {/* School */}
           <Box className="flex items-center gap-2 mb-4">
+            <Typography
+              variant="body2"
             <Typography 
               variant="body2" 
               className="text-gray-600 flex-1"
@@ -66,6 +83,11 @@ const AdminProgramcard = ({ id, programName, programCode, schoolName }) => {
 
           {/* Footer */}
           <Box className="mt-auto pt-4 border-t border-gray-100">
+            <Typography
+              variant="caption"
+              className="text-blue-600 font-medium hover:text-blue-800"
+            >
+              View Courses →
             <Typography 
               variant="caption" 
               className="text-blue-600 font-medium hover:text-blue-800"

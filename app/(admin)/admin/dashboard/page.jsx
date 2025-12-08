@@ -18,15 +18,18 @@ import {
   InputAdornment,
   Button
 } from "@mui/material";
+import { useRouter } from "next/navigation";
 import { Edit, Delete, Search, Sort, Add, Link as LinkIcon } from "@mui/icons-material";
 import CreateUser from "../../../client/components/admin/CreateUser";
 import AssignCourse from "../../../client/components/admin/AssignCourse";
 
 const AdminDash = () => {
+  const router = useRouter();
   const [stats, setStats] = useState({
     totalUsers: 0,
     teachers: 0,
     editors: 0,
+    schools: 0,
     programs: 0,
     topics: 0
   });
@@ -128,12 +131,18 @@ const AdminDash = () => {
             {[
               { label: "Total Users", value: stats.totalUsers, bg: "rgba(59,130,246,0.1)", color: "#1d4ed8", borderColor: "#3b82f6" },
               { label: "Teachers", value: stats.teachers, bg: "rgba(34,197,94,0.1)", color: "#15803d", borderColor: "#22c55e" },
+              { label: "Total Editors", value: stats.editors, bg: "rgba(251,146,60,0.1)", color: "#c2410c", borderColor: "#fb923c" },
+              { label: "Total Programs", value: stats.programs, bg: "rgba(168,85,247,0.1)", color: "#7c2d12", borderColor: "#a855f7", link: "/admin/programs" },
               { label: "Editors", value: stats.editors, bg: "rgba(251,146,60,0.1)", color: "#c2410c", borderColor: "#fb923c" },
               { label: "Total Programs", value: stats.programs, bg: "rgba(168,85,247,0.1)", color: "#7c2d12", borderColor: "#a855f7" },
               { label: "Total Topics", value: stats.topics, bg: "rgba(6,182,212,0.1)", color: "#0e7490", borderColor: "#06b6d4" },
             ].map((item, index) => (
               <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }} key={index}>
                 <Card
+                  onClick={() => item.link && router.push(item.link)}
+                  sx={{
+                    p: 3,
+                    cursor: item.link ? 'pointer' : 'default',
                   sx={{
                     p: 3,
                     border: `2px solid ${item.borderColor}`,
