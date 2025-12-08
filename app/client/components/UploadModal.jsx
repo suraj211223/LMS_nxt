@@ -53,12 +53,12 @@ const VideoUploadModal = ({ open, onClose, topic, onUploadComplete }) => {
 
       alert("Uploaded successfully!");
       setFile(null);
-      
+
       // Call the completion callback to update workflow
       if (onUploadComplete) {
         onUploadComplete();
       }
-      
+
       onClose();
     } catch (err) {
       alert("Error uploading video");
@@ -78,7 +78,7 @@ const VideoUploadModal = ({ open, onClose, topic, onUploadComplete }) => {
           bgcolor: "background.paper",
           p: 4,
           borderRadius: 3,
-          box boxShadow: 24,
+          boxShadow: 24,
         }}
       >
         <Typography variant="h6" mb={2} fontWeight={600}>
