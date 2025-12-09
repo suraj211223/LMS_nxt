@@ -21,10 +21,26 @@ export async function GET(req) {
             return NextResponse.json({ error: "Script not found" }, { status: 404 });
         }
 
-        // Fetch topic details for naming
+        // Fetch topic details for naming, including Course Teachers for fallback
         const topic = await prisma.contentItem.findUnique({
             where: { id: parseInt(topicId) },
-            include: { section: true }
+            include: {
+                section: {
+                    include: {
+                        course: {
+                            include: {
+                                assignments: {
+                                    include: {
+                                        user: {
+                                            include: { role: true }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         });
 
         // --- Calculate Filename ---
@@ -32,7 +48,6 @@ export async function GET(req) {
         const unitNum = (topic.section.orderIndex || 0).toString().padStart(2, "0");
 
         // 2. Topic Number (Calculated by counting topics in the same section with lower IDs)
-        // We need to count topics to get the correct index 1..N
         const prevTopicsCount = await prisma.contentItem.count({
             where: {
                 sectionId: topic.sectionId,
@@ -43,7 +58,23 @@ export async function GET(req) {
 
         // 3. Topic Name & Teacher Name
         const topicName = topic.title || "Untitled";
-        const teacherName = topic.section.profName || "Unknown";
+
+        let teacherName = topic.section.profName;
+        const isPlaceholder = !teacherName || ["tbd", "to be decided", "unknown"].includes(teacherName.toLowerCase());
+
+        if (isPlaceholder) {
+            // Find assigned teacher from course
+            const teachers = topic.section.course.assignments
+                .map(a => a.user)
+                .filter(u => u.role && u.role.roleName === 'Teacher');
+
+            if (teachers.length > 0) {
+                // Use the first assigned teacher found
+                teacherName = `${teachers[0].firstName} ${teachers[0].lastName || ''}`.trim();
+            } else {
+                teacherName = "TBD";
+            }
+        }
 
         const safeTopic = topicName.replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "_");
         const safeTeacher = teacherName.replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "_");
