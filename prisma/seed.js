@@ -1,15 +1,36 @@
 /**
- * prisma/seed.js - Example seeding script for LMS_nxt
- * Use `node prisma/seed.js` or configure "prisma" -> "seed" in package.json to run.
+ * prisma/seed.js - Seeding script for LMS_nxt
+ * Generates random credentials and logs them to credentials.txt
  */
 
 try { require('dotenv').config({ path: '.env.local' }); } catch (err) { /* ignore */ }
 try { require('dotenv').config(); } catch (err) { /* ignore if dotenv missing */ }
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
+const fs = require('fs');
+const path = require('path');
+const bcrypt = require('bcryptjs');
+
+function generatePassword(length = 8) {
+  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let retVal = "";
+  for (let i = 0, n = charset.length; i < length; ++i) {
+    retVal += charset.charAt(Math.floor(Math.random() * n));
+  }
+  return retVal;
+}
 
 async function main() {
   console.log('Seeding base roles...')
+
+  // Clear or create credentials file
+  const credentialsPath = path.join(process.cwd(), 'credentials.txt');
+  fs.writeFileSync(credentialsPath, "--- LMS Credentials Log ---\n\n");
+
+  const logCredential = (role, email, password) => {
+    const line = `Role: ${role.padEnd(20)} | Email: ${email.padEnd(30)} | Password: ${password}\n`;
+    fs.appendFileSync(credentialsPath, line);
+  };
 
   const roles = [
     { roleName: 'Admin', canEditCourses: true, canManageSystem: true, canUploadContent: true, canApproveContent: true, canPublishContent: true },
@@ -33,39 +54,44 @@ async function main() {
   const allRoles = await prisma.role.findMany();
   allRoles.forEach(r => { rolesMap[r.roleName.toLowerCase()] = r.id });
 
-  const bcrypt = require('bcryptjs');
-
+  // Define users to create
   const demoUsers = [
-    { role: 'teacher', email: 'testteacher@CU.in', password: 'dummy', firstName: 'Test', lastName: 'Teacher' },
-    { role: 'admin', email: 'admin@CU.in', password: 'dummy', firstName: 'Admin', lastName: 'User' },
-    { role: 'editor', email: 'editor@CU.in', password: 'dummy', firstName: 'Editor', lastName: 'User' },
+    { role: 'admin', email: 'admin@CU.in', firstName: 'Admin', lastName: 'User' },
+    { role: 'teacher', email: 'testteacher@CU.in', firstName: 'Test', lastName: 'Teacher' },
 
-    // Extra Accounts
-    { role: 'editor', email: 'editor1@CU.in', password: 'dummy', firstName: 'Editor', lastName: 'One' },
-    { role: 'editor', email: 'editor2@CU.in', password: 'dummy', firstName: 'Editor', lastName: 'Two' },
-    { role: 'teaching assistant', email: 'ta1@CU.in', password: 'dummy', firstName: 'TA', lastName: 'One' },
-    { role: 'teaching assistant', email: 'ta2@CU.in', password: 'dummy', firstName: 'TA', lastName: 'Two' },
-    { role: 'publisher', email: 'publisher1@CU.in', password: 'dummy', firstName: 'Publisher', lastName: 'One' },
-    { role: 'publisher', email: 'publisher2@CU.in', password: 'dummy', firstName: 'Publisher', lastName: 'Two' },
+    // 2 Editors
+    { role: 'editor', email: 'editor1@CU.in', firstName: 'Editor', lastName: 'One' },
+    { role: 'editor', email: 'editor2@CU.in', firstName: 'Editor', lastName: 'Two' },
+
+    // 2 Teaching Assistants
+    { role: 'teaching assistant', email: 'ta1@CU.in', firstName: 'TA', lastName: 'One' },
+    { role: 'teaching assistant', email: 'ta2@CU.in', firstName: 'TA', lastName: 'Two' },
+
+    // 2 Publishers
+    { role: 'publisher', email: 'publisher1@CU.in', firstName: 'Publisher', lastName: 'One' },
+    { role: 'publisher', email: 'publisher2@CU.in', firstName: 'Publisher', lastName: 'Two' },
   ];
 
   for (const u of demoUsers) {
     const roleId = rolesMap[u.role.toLowerCase()];
     if (!roleId) continue;
 
-    const passwordHash = bcrypt.hashSync(u.password, 10);
+    const password = generatePassword(8);
+    const passwordHash = bcrypt.hashSync(password, 10);
+
     await prisma.user.upsert({
       where: { email: u.email },
       update: { passwordHash, firstName: u.firstName, lastName: u.lastName, roleId },
       create: { email: u.email, passwordHash, firstName: u.firstName, lastName: u.lastName, roleId }
     });
+
+    logCredential(u.role, u.email, password);
   }
 
   // --- LEGACY DATA IMPORT ---
   console.log('--- Starting Legacy Data Seed (Schools, Programs, Courses, Teachers) ---');
   let legacyData;
   try {
-    // Must use valid relative path
     legacyData = require('./seed-data');
   } catch (e) {
     console.warn('Could not load legacy data ./seed-data.js', e.message);
@@ -73,7 +99,6 @@ async function main() {
   }
 
   // 1. Seed Schools
-  // Map oldId -> newId so we can link them correctly
   const schoolIDMap = {};
   for (const s of legacyData.schools) {
     const createdSchool = await prisma.school.upsert({
@@ -135,30 +160,32 @@ async function main() {
   const teacherRoleId = rolesMap['teacher'];
   const userIDMap = {};
 
-  for (const u of legacyData.users) {
-    if (!teacherRoleId) break;
+  if (teacherRoleId) {
+    console.log("Seeding legacy teachers...");
+    for (const u of legacyData.users) {
 
-    // Default password for all migrated teachers
-    const passwordHash = bcrypt.hashSync('password123', 10);
+      const password = generatePassword(8);
+      const passwordHash = bcrypt.hashSync(password, 10);
 
-    // We intentionally UPSERT. If user exists (e.g. maria), we update them to ensure they have the hashed password and correct Role.
-    const createdUser = await prisma.user.upsert({
-      where: { email: u.email },
-      update: {
-        passwordHash: passwordHash,
-        firstName: u.firstName,
-        lastName: u.lastName,
-        roleId: teacherRoleId
-      },
-      create: {
-        email: u.email,
-        passwordHash: passwordHash,
-        firstName: u.firstName,
-        lastName: u.lastName,
-        roleId: teacherRoleId
-      }
-    });
-    userIDMap[u.id] = createdUser.id;
+      const createdUser = await prisma.user.upsert({
+        where: { email: u.email },
+        update: {
+          passwordHash: passwordHash, // Reset password on seed
+          firstName: u.firstName,
+          lastName: u.lastName,
+          roleId: teacherRoleId
+        },
+        create: {
+          email: u.email,
+          passwordHash: passwordHash,
+          firstName: u.firstName,
+          lastName: u.lastName,
+          roleId: teacherRoleId
+        }
+      });
+      userIDMap[u.id] = createdUser.id;
+      logCredential("Teacher (Legacy)", u.email, password);
+    }
   }
 
   // 5. Seed Assignments
@@ -184,20 +211,17 @@ async function main() {
         });
         assignmentCount++;
       } catch (err) {
-        // Ignore unique constraint errors or just warn
+        // Ignore unique constraint errors
       }
     }
   }
 
   console.log(`Legacy Import Summary:
-  - Schools: ${legacyData.schools.length}
-  - Programs: ${legacyData.programs.length}
-  - Courses: ${legacyData.courses.length}
   - Users (Teachers): ${legacyData.users.length}
   - Assignments: ${assignmentCount}
   `);
 
-  console.log('Seeding complete.')
+  console.log('Seeding complete. Credentials saved to credentials.txt');
 }
 
 main()
