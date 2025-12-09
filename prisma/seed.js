@@ -1,36 +1,27 @@
 /**
  * prisma/seed.js - Seeding script for LMS_nxt
- * Generates random credentials and logs them to credentials.txt
+ * 
+ * Uses static credentials from seed-users.js
  */
 
 try { require('dotenv').config({ path: '.env.local' }); } catch (err) { /* ignore */ }
 try { require('dotenv').config(); } catch (err) { /* ignore if dotenv missing */ }
+
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
-const fs = require('fs');
-const path = require('path');
 const bcrypt = require('bcryptjs');
 
-function generatePassword(length = 8) {
-  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let retVal = "";
-  for (let i = 0, n = charset.length; i < length; ++i) {
-    retVal += charset.charAt(Math.floor(Math.random() * n));
-  }
-  return retVal;
+// Import static users list
+let usersToSeed = [];
+try {
+  usersToSeed = require('./seed-users.js');
+} catch (e) {
+  console.warn("Could not load seed-users.js, please ensure credentials are generated.", e.message);
+  process.exit(1);
 }
 
 async function main() {
   console.log('Seeding base roles...')
-
-  // Clear or create credentials file
-  const credentialsPath = path.join(process.cwd(), 'credentials.txt');
-  fs.writeFileSync(credentialsPath, "--- LMS Credentials Log ---\n\n");
-
-  const logCredential = (role, email, password) => {
-    const line = `Role: ${role.padEnd(20)} | Email: ${email.padEnd(30)} | Password: ${password}\n`;
-    fs.appendFileSync(credentialsPath, line);
-  };
 
   const roles = [
     { roleName: 'Admin', canEditCourses: true, canManageSystem: true, canUploadContent: true, canApproveContent: true, canPublishContent: true },
@@ -48,180 +39,134 @@ async function main() {
     })
   }
 
-  // --- STANDARD DEMO USERS ---
-  console.log('Seeding demo users...')
+  // Reload roles map
   const rolesMap = {};
   const allRoles = await prisma.role.findMany();
   allRoles.forEach(r => { rolesMap[r.roleName.toLowerCase()] = r.id });
 
-  // Define users to create
-  const demoUsers = [
-    { role: 'admin', email: 'admin@CU.in', firstName: 'Admin', lastName: 'User' },
-    { role: 'teacher', email: 'testteacher@CU.in', firstName: 'Test', lastName: 'Teacher' },
+  // SEED USERS
+  console.log(`Seeding ${usersToSeed.length} users from seed-users.js...`);
+  const userIDMapByEmail = {};
 
-    // 2 Editors
-    { role: 'editor', email: 'editor1@CU.in', firstName: 'Editor', lastName: 'One' },
-    { role: 'editor', email: 'editor2@CU.in', firstName: 'Editor', lastName: 'Two' },
-
-    // 2 Teaching Assistants
-    { role: 'teaching assistant', email: 'ta1@CU.in', firstName: 'TA', lastName: 'One' },
-    { role: 'teaching assistant', email: 'ta2@CU.in', firstName: 'TA', lastName: 'Two' },
-
-    // 2 Publishers
-    { role: 'publisher', email: 'publisher1@CU.in', firstName: 'Publisher', lastName: 'One' },
-    { role: 'publisher', email: 'publisher2@CU.in', firstName: 'Publisher', lastName: 'Two' },
-  ];
-
-  for (const u of demoUsers) {
+  for (const u of usersToSeed) {
     const roleId = rolesMap[u.role.toLowerCase()];
-    if (!roleId) continue;
+    if (!roleId) {
+      console.warn(`Role not found for ${u.email}: ${u.role}`);
+      continue;
+    }
 
-    const password = generatePassword(8);
-    const passwordHash = bcrypt.hashSync(password, 10);
+    const passwordHash = bcrypt.hashSync(u.password, 10);
 
-    await prisma.user.upsert({
+    const createdUser = await prisma.user.upsert({
       where: { email: u.email },
-      update: { passwordHash, firstName: u.firstName, lastName: u.lastName, roleId },
-      create: { email: u.email, passwordHash, firstName: u.firstName, lastName: u.lastName, roleId }
+      update: {
+        passwordHash,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        roleId
+      },
+      create: {
+        email: u.email,
+        passwordHash,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        roleId
+      }
     });
 
-    logCredential(u.role, u.email, password);
+    userIDMapByEmail[u.email] = createdUser.id;
   }
 
-  // --- LEGACY DATA IMPORT ---
-  console.log('--- Starting Legacy Data Seed (Schools, Programs, Courses, Teachers) ---');
-  let legacyData;
+  // LEGACY DATA (Schools, Programs, Courses Only)
+  // We use legacy data to populate courses, but map assignments to our freshly seeded users.
+  console.log('--- Starting Legacy Data Seed (Schools, Programs, Courses) ---');
+  let legacyData = { schools: [], programs: [], courses: [], users: [], assignments: [] };
   try {
     legacyData = require('./seed-data');
   } catch (e) {
     console.warn('Could not load legacy data ./seed-data.js', e.message);
-    legacyData = { schools: [], programs: [], courses: [], users: [], assignments: [] };
   }
 
   // 1. Seed Schools
   const schoolIDMap = {};
   for (const s of legacyData.schools) {
-    const createdSchool = await prisma.school.upsert({
+    const created = await prisma.school.upsert({
       where: { name: s.name },
       update: {},
       create: { name: s.name }
     });
-    schoolIDMap[s.id] = createdSchool.id;
+    schoolIDMap[s.id] = created.id;
   }
 
   // 2. Seed Programs
   const programIDMap = {};
   for (const p of legacyData.programs) {
     const newSchoolId = schoolIDMap[p.schoolId];
-    if (!newSchoolId) {
-      console.log(`Skipping program ${p.name} - School ID ${p.schoolId} not found`);
-      continue;
+    if (newSchoolId) {
+      const code = p.code || `PROG-${Date.now()}-${p.id}`;
+      const created = await prisma.program.upsert({
+        where: { programCode: code },
+        update: {},
+        create: {
+          programName: p.name,
+          programCode: code,
+          schoolId: newSchoolId
+        }
+      });
+      programIDMap[p.id] = created.id;
     }
-
-    const code = p.code || `PROG-${Date.now()}`;
-    const createdProgram = await prisma.program.upsert({
-      where: { programCode: code },
-      update: {},
-      create: {
-        programName: p.name,
-        programCode: code,
-        schoolId: newSchoolId
-      }
-    });
-    programIDMap[p.id] = createdProgram.id;
   }
 
   // 3. Seed Courses
   const courseIDMap = {};
   for (const c of legacyData.courses) {
     const newProgramId = programIDMap[c.programId];
-    if (!newProgramId) {
-      console.log(`Skipping course ${c.title} - Program ID ${c.programId} not found`);
-      continue;
-    }
-
-    const createdCourse = await prisma.course.upsert({
-      where: { courseCode: c.code },
-      update: {
-        title: c.title,
-        programId: newProgramId
-      },
-      create: {
-        title: c.title,
-        courseCode: c.code,
-        programId: newProgramId,
-        status: 'Active'
-      }
-    });
-    courseIDMap[c.id] = createdCourse.id;
-  }
-
-  // 4. Seed Legacy Users (Teachers)
-  const teacherRoleId = rolesMap['teacher'];
-  const userIDMap = {};
-
-  if (teacherRoleId) {
-    console.log("Seeding legacy teachers...");
-    for (const u of legacyData.users) {
-
-      const password = generatePassword(8);
-      const passwordHash = bcrypt.hashSync(password, 10);
-
-      const createdUser = await prisma.user.upsert({
-        where: { email: u.email },
+    if (newProgramId) {
+      const created = await prisma.course.upsert({
+        where: { courseCode: c.code },
         update: {
-          passwordHash: passwordHash, // Reset password on seed
-          firstName: u.firstName,
-          lastName: u.lastName,
-          roleId: teacherRoleId
+          title: c.title,
+          programId: newProgramId
         },
         create: {
-          email: u.email,
-          passwordHash: passwordHash,
-          firstName: u.firstName,
-          lastName: u.lastName,
-          roleId: teacherRoleId
+          title: c.title,
+          courseCode: c.code,
+          programId: newProgramId,
+          status: 'Active'
         }
       });
-      userIDMap[u.id] = createdUser.id;
-      logCredential("Teacher (Legacy)", u.email, password);
+      courseIDMap[c.id] = created.id;
     }
   }
 
-  // 5. Seed Assignments
+  // 4. Assignments
+  // We map legacy assignments using email matching
+  const legacyIdToEmail = {};
+  legacyData.users.forEach(u => { legacyIdToEmail[u.id] = u.email });
+
   let assignmentCount = 0;
   for (const a of legacyData.assignments) {
-    const newUserId = userIDMap[a.userId];
+    const userEmail = legacyIdToEmail[a.userId];
+    if (!userEmail) continue;
+
+    const newUserId = userIDMapByEmail[userEmail];
     const newCourseId = courseIDMap[a.courseId];
 
     if (newUserId && newCourseId) {
       try {
         await prisma.userCourseAssignment.upsert({
           where: {
-            user_course_unique: {
-              userId: newUserId,
-              courseId: newCourseId
-            }
+            user_course_unique: { userId: newUserId, courseId: newCourseId }
           },
           update: {},
-          create: {
-            userId: newUserId,
-            courseId: newCourseId
-          }
+          create: { userId: newUserId, courseId: newCourseId }
         });
         assignmentCount++;
-      } catch (err) {
-        // Ignore unique constraint errors
-      }
+      } catch (err) { /* ignore */ }
     }
   }
 
-  console.log(`Legacy Import Summary:
-  - Users (Teachers): ${legacyData.users.length}
-  - Assignments: ${assignmentCount}
-  `);
-
-  console.log('Seeding complete. Credentials saved to credentials.txt');
+  console.log(`Seeding complete.`);
 }
 
 main()
