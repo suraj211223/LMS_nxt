@@ -32,7 +32,7 @@ export async function DELETE(req) {
     }
 
     // Check user role for Admin override
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const userId = cookieStore.get("userId")?.value;
     let isAdmin = false;
 
