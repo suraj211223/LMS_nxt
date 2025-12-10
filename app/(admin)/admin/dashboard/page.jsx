@@ -127,7 +127,7 @@ const AdminDash = () => {
       ) : (
         <>
           {/* DASHBOARD CARDS */}
-          <Grid container spacing={3} direction="row" className="pt-8 px-20">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 pt-8 px-20">
             {[
               { label: "Total Users", value: stats.totalUsers, bg: "rgba(59,130,246,0.1)", color: "#1d4ed8", borderColor: "#3b82f6" },
               { label: "Teachers", value: stats.teachers, bg: "rgba(34,197,94,0.1)", color: "#15803d", borderColor: "#22c55e" },
@@ -135,7 +135,7 @@ const AdminDash = () => {
               { label: "Total Programs", value: stats.programs, bg: "rgba(168,85,247,0.1)", color: "#7c2d12", borderColor: "#a855f7", link: "/admin/programs" },
               { label: "Total Topics", value: stats.topics, bg: "rgba(6,182,212,0.1)", color: "#0e7490", borderColor: "#06b6d4" },
             ].map((item, index) => (
-              <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }} key={index}>
+              <div key={index}>
                 <Card
                   onClick={() => item.link && router.push(item.link)}
                   sx={{
@@ -145,7 +145,8 @@ const AdminDash = () => {
                     border: `2px solid ${item.borderColor}`,
                     borderRadius: "16px",
                     background: `linear-gradient(135deg, ${item.bg} 0%, rgba(255,255,255,0.9) 100%)`,
-                    height: "140px",
+                    height: "100%",
+                    minHeight: "140px",
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "center",
@@ -181,9 +182,9 @@ const AdminDash = () => {
                     {item.value || 0}
                   </Typography>
                 </Card>
-              </Grid>
+              </div>
             ))}
-          </Grid>
+          </div>
 
           {/* TEACHERS TABLE */}
           <Box sx={{ mx: 20, mt: 8 }}>

@@ -225,7 +225,7 @@ const EditorDash = () => {
       ) : (
         <>
           {/* DASHBOARD CARDS */}
-          <Grid container spacing={3} direction="row" className="pt-8 px-20">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 pt-8 px-20">
             {[
               { label: "Total Topics", value: stats.totalTopics, bg: "rgba(59,130,246,0.1)", color: "#1d4ed8", borderColor: "#3b82f6" },
               { label: "In Editing", value: stats.inEditing + (stats.scripted || 0), bg: "rgba(251,146,60,0.1)", color: "#c2410c", borderColor: "#fb923c" },
@@ -233,14 +233,15 @@ const EditorDash = () => {
               { label: "Approved", value: stats.approved, bg: "rgba(16,185,129,0.1)", color: "#047857", borderColor: "#10b981" },
               { label: "Published", value: stats.published, bg: "rgba(34,197,94,0.1)", color: "#15803d", borderColor: "#22c55e" },
             ].map((item, index) => (
-              <Grid item xs={12} sm={6} md={4} lg={2} key={index}>
+              <div key={index}>
                 <Card
                   sx={{
                     p: 3,
                     border: `2px solid ${item.borderColor}`,
                     borderRadius: "16px",
                     background: `linear-gradient(135deg, ${item.bg} 0%, rgba(255,255,255,0.9) 100%)`,
-                    height: "140px",
+                    height: "100%",
+                    minHeight: "140px",
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "center",
@@ -276,9 +277,9 @@ const EditorDash = () => {
                     {item.value || 0}
                   </Typography>
                 </Card>
-              </Grid>
+              </div>
             ))}
-          </Grid>
+          </div>
 
           {/* TOPICS IN EDITING SECTION */}
           <Box sx={{ mx: 20, mt: 8 }}>

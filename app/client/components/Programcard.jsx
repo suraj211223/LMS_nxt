@@ -5,8 +5,8 @@ import { Trash2 } from 'lucide-react';
 
 const AdminProgramcard = ({ id, programName, programCode, schoolName }) => {
   return (
-    <Card 
-      className="h-full transition-all duration-300 hover:shadow-lg  cursor-pointer border-l-4 border-l-blue-500"
+    <Card
+      className="h-full transition-all duration-300 hover:shadow-lg  cursor-pointer border-l-4 border-l-blue-500 border border-blue-200"
       onClick={() => {
         // Navigate to program details or courses within this program
         window.location.href = `/admin/programs/${id}`;
@@ -16,14 +16,14 @@ const AdminProgramcard = ({ id, programName, programCode, schoolName }) => {
         <Box className="flex flex-col h-full">
           {/* Program Header */}
           <Box className="flex justify-between items-center mb-3">
-            <Typography 
-              variant="h6" 
-              component="h3" 
+            <Typography
+              variant="h6"
+              component="h3"
               className="font-bold text-gray-800 leading-tight flex-1"
             >
               {programName}
             </Typography>
-            <IconButton 
+            <IconButton
               size="small"
               onClick={(e) => {
                 e.stopPropagation();
@@ -45,7 +45,7 @@ const AdminProgramcard = ({ id, programName, programCode, schoolName }) => {
 
           {/* Program Code */}
           <Box className="flex items-center gap-2 mb-3">
-            <Chip 
+            <Chip
               label={programCode}
               size="small"
               variant="outlined"
@@ -56,8 +56,8 @@ const AdminProgramcard = ({ id, programName, programCode, schoolName }) => {
 
           {/* School */}
           <Box className="flex items-center gap-2 mb-4">
-            <Typography 
-              variant="body2" 
+            <Typography
+              variant="body2"
               className="text-gray-600 flex-1"
             >
               {schoolName}
@@ -66,8 +66,8 @@ const AdminProgramcard = ({ id, programName, programCode, schoolName }) => {
 
           {/* Footer */}
           <Box className="mt-auto pt-4 border-t border-gray-100">
-            <Typography 
-              variant="caption" 
+            <Typography
+              variant="caption"
               className="text-blue-600 font-medium hover:text-blue-800"
             >
               View Program Details →

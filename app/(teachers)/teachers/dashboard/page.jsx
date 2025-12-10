@@ -232,7 +232,7 @@ const TeacherDash = () => {
             ) : (
                 <>
                     {/* DASHBOARD CARDS */}
-                    <Grid container spacing={3} direction="row" className="pt-8 px-20">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-8 px-20">
                         {[
                             {
                                 label: "Total Topics",
@@ -259,12 +259,12 @@ const TeacherDash = () => {
                                 color: "#a855f7"
                             },
                         ].map((item, index) => (
-                            <Grid item xs={12} sm={6} md={3} lg={3} key={index}>
+                            <div key={index}>
                                 <Card
                                     sx={{
                                         borderRadius: "24px",
                                         boxShadow: "0 10px 30px -10px rgba(0,0,0,0.05)",
-                                        border: "1px solid rgba(0,0,0,0.05)",
+                                        border: `1px solid ${item.color}`,
                                         height: "100%",
                                         p: 3,
                                         display: 'flex',
@@ -280,9 +280,9 @@ const TeacherDash = () => {
                                         {item.label}
                                     </Typography>
                                 </Card>
-                            </Grid>
+                            </div>
                         ))}
-                    </Grid>
+                    </div>
 
                     {/* TOPICS FOR REVIEW SECTION */}
                     <Box sx={{ mx: 20, mt: 8 }}>
