@@ -1,9 +1,11 @@
 "use client"; // ✨ Step 1: Make it a Client Component
 import React, { useState, useEffect } from "react";
 import { Grid, Box, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+import { useSearchParams } from "next/navigation";
 import EditorCoursecard from "@/app/client/components/EditorCoursecard";
 
 export default function Course() {
+  const searchParams = useSearchParams();
   // --- ✨ Step 2: Add state for courses and filters ---
   const [courses, setCourses] = useState([]);
   const [filteredCourses, setFilteredCourses] = useState([]);
@@ -29,16 +31,22 @@ export default function Course() {
       const mydata = data.courses || [];
       console.log("Courses data:", mydata); // Debug log
       setCourses(mydata);
-      setFilteredCourses(mydata); // Initially, all courses are shown
 
-      // --- Dynamically create filter options from the data ---
-      // Fix: Use correct property names from API response
       const schools = [...new Set(mydata.map(item => item.department).filter(Boolean))];
       const programmes = [...new Set(mydata.map(item => item.program).filter(Boolean))];
       console.log("Schools extracted:", schools); // Debug log
       console.log("Programmes extracted:", programmes); // Debug log
       setSchoolOptions(schools);
       setProgrammeOptions(programmes);
+
+      // Check for program query parameter
+      const programParam = searchParams.get("program");
+      if (programParam) {
+        setSelectedProgramme(programParam);
+        // The filtering effect will handle setFilteredCourses based on this
+      } else {
+        setFilteredCourses(mydata); // Initially, all courses are shown if no filter
+      }
     }
 
     fetchData();
