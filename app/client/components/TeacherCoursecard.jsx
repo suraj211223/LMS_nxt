@@ -10,7 +10,7 @@ const TeacherCoursecard = ({ id, courseId, Course, unitCount, topicCount }) => {
   const router = useRouter();
   return (
     <Card className="h-full w-full">
-      <div className="bg-white border-l-4 border-t-2 border-r-2 border-b-2 border-r-gray-200 border-t-gray-200 border-b-gray-200 border-blue-500 h-full min-h-[350px] text-black p-4 rounded-lg flex flex-col w-full">
+      <div className="bg-white border-l-4 border-t-2 border-r-2 border-b-2 border-r-gray-200 border-t-gray-200 border-b-gray-200 border-blue-500 h-full text-black p-4 rounded-lg flex flex-col w-full">
 
         {/* CONTENT */}
         <div className="grow">

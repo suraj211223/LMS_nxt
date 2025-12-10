@@ -46,9 +46,9 @@ const Page = () => {
     return (
         <div className="p-4">
             <h1 className="text-2xl font-bold mb-4">Your Courses</h1>
-            <Grid container spacing={3}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {courses.map((course) => (
-                    <Grid item xs={12} sm={6} md={4} key={course.course_id} sx={{ display: 'flex' }}>
+                    <div key={course.course_id} className="flex">
                         <TeacherCoursecard
                             id={course.course_id}
                             courseId={course.course_code}
@@ -56,9 +56,9 @@ const Page = () => {
                             unitCount={course.unit_count}
                             topicCount={course.topic_count}
                         />
-                    </Grid>
+                    </div>
                 ))}
-            </Grid>
+            </div>
         </div>
     );
 };

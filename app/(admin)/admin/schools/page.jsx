@@ -56,18 +56,16 @@ function Schools() {
                 {loading ? (
                     <Typography className="text-gray-500">Loading schools…</Typography>
                 ) : (
-                    <Grid container spacing={3}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         {schools.length > 0 ? (
                             schools.map((school) => (
-                                <Grid
-                                    item
-                                    xs={12} sm={6} md={4} lg={3}
-                                    key={school.id}
-                                >
+                                <div key={school.id}>
                                     <Card
                                         sx={{
                                             borderRadius: "16px",
                                             boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+                                            border: '1px solid #2563eb',
+                                            height: "100%",
                                             transition: "transform 0.2s",
                                             "&:hover": { transform: "translateY(-4px)", boxShadow: "0 8px 16px rgba(0,0,0,0.1)" }
                                         }}
@@ -84,18 +82,18 @@ function Schools() {
                                             </Typography>
                                         </CardContent>
                                     </Card>
-                                </Grid>
+                                </div>
                             ))
                         ) : (
-                            <Grid item xs={12}>
+                            <div className="col-span-full">
                                 <Box className="text-center py-12">
                                     <Typography variant="h6" className="text-gray-500">
                                         No schools found. Add one to get started.
                                     </Typography>
                                 </Box>
-                            </Grid>
+                            </div>
                         )}
-                    </Grid>
+                    </div>
                 )}
             </div>
         </>
