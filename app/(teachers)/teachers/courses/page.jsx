@@ -48,7 +48,7 @@ const Page = () => {
             <h1 className="text-2xl font-bold mb-4">Your Courses</h1>
             <Grid container spacing={3}>
                 {courses.map((course) => (
-                    <Grid item xs={12} sm={6} md={4} key={course.course_id}>
+                    <Grid item xs={12} sm={6} md={4} key={course.course_id} sx={{ display: 'flex' }}>
                         <TeacherCoursecard
                             id={course.course_id}
                             courseId={course.course_code}

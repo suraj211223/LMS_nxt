@@ -297,28 +297,28 @@ module.exports = {
         {
             "id": 10,
             "roleId": 2,
-            "email": "maria.fulgen@clg.edu",
+            "email": "maria.fulgen@christuniversity.in",
             "firstName": "Maria",
             "lastName": "Fulgen"
         },
         {
             "id": 11,
             "roleId": 2,
-            "email": "pooja.jain@clg.edu",
+            "email": "pooja.jain@christuniversity.in",
             "firstName": "Pooja",
             "lastName": "Jain"
         },
         {
             "id": 12,
             "roleId": 2,
-            "email": "sudhanshu.n@clg.edu",
+            "email": "sudhamshu.narayan@christuniversity.in",
             "firstName": "Sudhanshu",
             "lastName": "N"
         },
         {
             "id": 13,
             "roleId": 2,
-            "email": "lakshmi.b@clg.edu",
+            "email": "lakshmi.b@christuniversity.in",
             "firstName": "Lakshmi",
             "lastName": "B"
         },
@@ -339,7 +339,7 @@ module.exports = {
         {
             "id": 16,
             "roleId": 2,
-            "email": "geetanjali.purswani@clg.edu",
+            "email": "geetanjali.purswani@christuniversity.in",
             "firstName": "Geetanjali",
             "lastName": "Purswani"
         },
@@ -514,35 +514,35 @@ module.exports = {
         {
             "id": 56,
             "roleId": 2,
-            "email": "arpita.teacher@clg.edu",
+            "email": "arpita.goswami@christuniversity.in",
             "firstName": "Arpita",
             "lastName": ""
         },
         {
             "id": 57,
             "roleId": 2,
-            "email": "anjali.pk@clg.edu",
+            "email": "anjali.pk@christuniversity.in",
             "firstName": "Anjali",
             "lastName": "PK"
         },
         {
             "id": 59,
             "roleId": 2,
-            "email": "gerard.rassendren@clg.edu",
+            "email": "gerard.rassendren@christuniversity.in",
             "firstName": "Gerard",
             "lastName": "Rassendren"
         },
         {
             "id": 60,
             "roleId": 2,
-            "email": "sankar.varma@clg.edu",
+            "email": "sankar.varma@christuniversity.in",
             "firstName": "Sankar",
             "lastName": "Varma"
         },
         {
             "id": 62,
             "roleId": 2,
-            "email": "aleena.teacher@clg.edu",
+            "email": "aleena.jose@christuniversity.in",
             "firstName": "Aleena",
             "lastName": ""
         },

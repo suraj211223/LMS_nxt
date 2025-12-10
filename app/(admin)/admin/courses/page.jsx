@@ -124,7 +124,7 @@ function CourseContent() {
       <div className="w-full text-black p-5">
         <Grid container spacing={3}>
           {filteredCourses.map((item) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={item.course_id || item.id}>
+            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={item.course_id || item.id} sx={{ display: 'flex' }}>
               <AdminCoursecard
                 id={item.course_id}
                 courseId={item.course_code}
