@@ -1,10 +1,10 @@
 "use client"; // ✨ Step 1: Make it a Client Component
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { Grid, Box, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import { useSearchParams } from "next/navigation";
 import EditorCoursecard from "@/app/client/components/EditorCoursecard";
 
-export default function Course() {
+function CourseContent() {
   const searchParams = useSearchParams();
   // --- ✨ Step 2: Add state for courses and filters ---
   const [courses, setCourses] = useState([]);
@@ -150,5 +150,13 @@ export default function Course() {
         </Grid>
       </div>
     </>
+  );
+}
+
+export default function Course() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CourseContent />
+    </Suspense>
   );
 }
