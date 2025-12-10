@@ -43,3 +43,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 /generated/prisma
+
+
+course info-csv/
+
+
+teacher_course_records.txt
