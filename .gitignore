@@ -45,6 +45,7 @@ next-env.d.ts
 /generated/prisma
 
 
-
 course info-csv/
-credentials.txt
+
+
+teacher_course_records.txt

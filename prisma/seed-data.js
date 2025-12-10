@@ -115,7 +115,7 @@ module.exports = {
         {
             "id": 24,
             "programId": 4,
-            "title": "Deep Learining",
+            "title": "Deep Learning",
             "code": "MAI-OL424-2"
         },
         {
@@ -255,30 +255,6 @@ module.exports = {
             "programId": 8,
             "title": "Public Finance and policy",
             "code": "ECO407-2"
-        },
-        {
-            "id": 48,
-            "programId": 6,
-            "title": "Operating System",
-            "code": "BCA-OL-106-2-1"
-        },
-        {
-            "id": 49,
-            "programId": 6,
-            "title": "Object Oriented Programming Using C++",
-            "code": "BCA-OL-107-2-1"
-        },
-        {
-            "id": 50,
-            "programId": 6,
-            "title": "Principles Of Software Development",
-            "code": "BCA-OL-108-2-1"
-        },
-        {
-            "id": 51,
-            "programId": 6,
-            "title": "Full Stack Development",
-            "code": "BCA-OL-209-2-1"
         },
         {
             "id": 52,
@@ -856,22 +832,6 @@ module.exports = {
         {
             "userId": 62,
             "courseId": 47
-        },
-        {
-            "userId": 44,
-            "courseId": 48
-        },
-        {
-            "userId": 45,
-            "courseId": 49
-        },
-        {
-            "userId": 46,
-            "courseId": 50
-        },
-        {
-            "userId": 47,
-            "courseId": 51
         },
         {
             "userId": 63,
