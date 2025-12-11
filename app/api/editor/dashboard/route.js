@@ -4,6 +4,14 @@ import { cookies } from "next/headers";
 
 const prisma = new PrismaClient();
 
+import { promises as fs } from "fs";
+import path from "path";
+
+// Use the environment variable for Railway Volume, or fallback to local "uploads" folder
+const STORAGE_PATH = process.env.RAILWAY_VOLUME_MOUNT_PATH || path.join(process.cwd(), "uploads");
+
+export const runtime = "nodejs";
+
 export async function GET() {
   try {
     const cookieStore = await cookies();
@@ -57,11 +65,12 @@ export async function GET() {
 
     const topicsInProgress = [];
 
-    courses.forEach(course => {
-      course.sections.forEach(section => {
+    // Process courses sequentially for async filesystem checks
+    await Promise.all(courses.map(async course => {
+      await Promise.all(course.sections.map(async section => {
         totalTopics += section.contents.length;
 
-        section.contents.forEach(topic => {
+        await Promise.all(section.contents.map(async topic => {
           // Stats Counting
           if (topic.workflowStatus === "Published") published++;
           if (topic.workflowStatus === "Editing") inEditing++;
@@ -73,6 +82,24 @@ export async function GET() {
           // Topics In Progress List (Everything except Planned)
           // We want to show Scripted, Editing, Post-Editing, Ready, Under Review, Approved, Published
           if (topic.workflowStatus !== "Planned" && topic.workflowStatus !== "Published") {
+
+            // CHECK DISK FOR FILES
+            let hasPpt = false;
+            let hasDoc = false;
+            let hasZip = false;
+
+            if (topic.contentscript) {
+              const topicDir = path.join(STORAGE_PATH, topic.id.toString());
+              try {
+                const files = await fs.readdir(topicDir);
+                hasPpt = files.some(f => f.startsWith("ppt."));
+                hasDoc = files.some(f => f.startsWith("doc."));
+                hasZip = files.some(f => f.startsWith("refs."));
+              } catch (e) {
+                // No dir => no files
+              }
+            }
+
             topicsInProgress.push({
               content_id: topic.id,
               topic_title: topic.title,
@@ -85,14 +112,14 @@ export async function GET() {
               additionalLink: topic.additionalLink, // ✨ Fetch Additional Link
               review_notes: topic.reviewNotes,
               assignedEditor: topic.assignedEditor,
-              has_ppt: !!topic.contentscript?.pptFileData,
-              has_doc: !!topic.contentscript?.docFileData,
-              has_zip: !!topic.contentscript?.zipFileData,
+              has_ppt: hasPpt,
+              has_doc: hasDoc,
+              has_zip: hasZip,
             });
           }
-        });
-      });
-    });
+        }));
+      }));
+    }));
 
     // Helper to map DB status to Frontend status
     const mapStatus = (status) => status;

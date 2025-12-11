@@ -5,6 +5,12 @@ const prisma = new PrismaClient();
 
 export const runtime = "nodejs";
 
+import { promises as fs } from "fs";
+import path from "path";
+
+// Use the environment variable for Railway Volume, or fallback to local "uploads" folder
+const STORAGE_PATH = process.env.RAILWAY_VOLUME_MOUNT_PATH || path.join(process.cwd(), "uploads");
+
 import { cookies } from "next/headers";
 
 export async function GET(req) {
@@ -67,10 +73,33 @@ export async function GET(req) {
 
         // 3. Fetch topics for review list
         const topicsForReview = [];
-        courses.forEach(course => {
-            course.sections.forEach(section => {
-                section.contents.forEach(topic => {
+        await Promise.all(courses.map(async course => {
+            await Promise.all(course.sections.map(async section => {
+                await Promise.all(section.contents.map(async topic => {
                     if (topic.workflowStatus === "Under_Review") {
+
+                        // CHECK DISK FOR FILES
+                        let hasPpt = false;
+                        let hasDoc = false;
+                        let hasZip = false;
+
+                        // We need access to contentscript ID. 
+                        // But wait, the previous query didn't include contentscript. 
+                        // I must update the Prisma query first.
+                        const script = await prisma.contentscript.findUnique({
+                            where: { contentId: topic.id }
+                        });
+
+                        if (script) {
+                            const topicDir = path.join(STORAGE_PATH, topic.id.toString());
+                            try {
+                                const files = await fs.readdir(topicDir);
+                                hasPpt = files.some(f => f.startsWith("ppt."));
+                                hasDoc = files.some(f => f.startsWith("doc."));
+                                hasZip = files.some(f => f.startsWith("refs."));
+                            } catch (e) { }
+                        }
+
                         topicsForReview.push({
                             content_id: topic.id,
                             topic_title: topic.title,
@@ -81,12 +110,15 @@ export async function GET(req) {
                             unit_title: section.title,
                             program_name: course.program?.programName || "Unknown Program", // ✨ Map program name
                             videoLink: topic.videoLink,
-                            additionalLink: topic.additionalLink // ✨ Return additional link
+                            additionalLink: topic.additionalLink, // ✨ Return additional link
+                            has_ppt: hasPpt,
+                            has_doc: hasDoc,
+                            has_zip: hasZip
                         });
                     }
-                });
-            });
-        });
+                }));
+            }));
+        }));
 
         return NextResponse.json({
             stats: {

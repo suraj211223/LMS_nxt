@@ -6,6 +6,9 @@ import { cookies } from "next/headers";
 
 const prisma = new PrismaClient();
 
+// Use the environment variable for Railway Volume, or fallback to local "uploads" folder
+const STORAGE_PATH = process.env.RAILWAY_VOLUME_MOUNT_PATH || path.join(process.cwd(), "uploads");
+
 export const runtime = "nodejs";
 
 // GET route to fetch courses
@@ -78,7 +81,7 @@ export async function GET(req) {
         status: course.status,
         program: course.program?.programName,
         department: course.program?.school?.name,
-        units: course.sections.map((section) => ({
+        units: await Promise.all(course.sections.map(async (section) => ({
           id: `u${section.id}`,
           section_id: section.id,
           name: section.title,
@@ -86,21 +89,42 @@ export async function GET(req) {
           storagePath: section.storagePath,
           pptFilename: section.pptFilename,
           materials: section.materials,
-          topics: section.contents.map((item) => ({
-            id: `t${item.id}`,
-            content_id: item.id,
-            name: item.title,
-            estimatedTime: item.estimatedDurationMin || 0,
-            status: mapWorkflowStatus(item.workflowStatus),
-            learning_objectives: item.learningObjectives,
-            videoLink: item.videoLink,
-            script: item.contentscript ? {
-              ppt: !!item.contentscript.pptFileData,
-              doc: !!item.contentscript.docFileData,
-              zip: !!item.contentscript.zipFileData,
-            } : null,
+          topics: await Promise.all(section.contents.map(async (item) => {
+            // Check disk for files to enable download buttons
+            let hasPpt = false;
+            let hasDoc = false;
+            let hasZip = false;
+
+            // We only check if contentscript entry exists at all first maybe? 
+            // Actually, checks disk directly is safer.
+            if (item.contentscript) {
+              const topicDir = path.join(STORAGE_PATH, item.id.toString());
+              try {
+                const files = await fs.readdir(topicDir);
+                hasPpt = files.some(f => f.startsWith("ppt."));
+                hasDoc = files.some(f => f.startsWith("doc."));
+                hasZip = files.some(f => f.startsWith("refs."));
+              } catch (e) {
+                // No dir => no files
+              }
+            }
+
+            return {
+              id: `t${item.id}`,
+              content_id: item.id,
+              name: item.title,
+              estimatedTime: item.estimatedDurationMin || 0,
+              status: mapWorkflowStatus(item.workflowStatus),
+              learning_objectives: item.learningObjectives,
+              videoLink: item.videoLink,
+              script: {
+                ppt: hasPpt,
+                doc: hasDoc,
+                zip: hasZip,
+              },
+            };
           })),
-        })),
+        }))),
       };
 
       return NextResponse.json(courseData);
