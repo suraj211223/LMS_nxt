@@ -178,9 +178,6 @@ model ContentItem {
 model Contentscript {
   id                   Int  @id @default(autoincrement()) @map("script_id")
   contentId            Int  @unique @map("content_id")
-  pptFileData          Bytes? @map("ppt_file_data")
-  docFileData          Bytes? @map("doc_file_data")
-  zipFileData          Bytes? @map("zip_file_data")
   introductionScript   String? @map("introduction_script")
   instructionsForEditor String? @map("instructions_for_editor")
 

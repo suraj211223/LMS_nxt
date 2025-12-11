@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
+import { promises as fs } from "fs";
+import path from "path";
+
 const prisma = new PrismaClient();
+
+// Use the environment variable for Railway Volume, or fallback to local "uploads" folder
+const STORAGE_PATH = process.env.RAILWAY_VOLUME_MOUNT_PATH || path.join(process.cwd(), "uploads");
 
 export async function GET(req) {
     const { searchParams } = new URL(req.url);
@@ -66,20 +72,32 @@ export async function GET(req) {
         let fileData = null;
         let filename = "";
         let contentType = "application/octet-stream";
+        let diskFilename = "";
 
         if (type === "ppt") {
-            fileData = script.pptFileData;
             filename = `${filenameBase}.pptx`;
             contentType = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+            diskFilename = "ppt.pptx";
         } else if (type === "doc") {
-            fileData = script.docFileData;
-            filename = `${filenameBase}.pdf`; // Defaulting to pdf as per user preference in other route
+            filename = `${filenameBase}.pdf`; // Defaulting to pdf usually
             contentType = "application/pdf";
+            diskFilename = "doc.pdf";
         } else if (type === "zip") {
-            fileData = script.zipFileData;
             filename = `${filenameBase}.zip`;
             contentType = "application/zip";
+            diskFilename = "refs.zip";
         }
+
+        // --- 1. Check Disk Storage (Volume) ---
+        const diskFilePath = path.join(STORAGE_PATH, topicId, diskFilename);
+        try {
+            const diskBuffer = await fs.readFile(diskFilePath);
+            fileData = diskBuffer;
+        } catch (e) {
+            // Not on disk
+        }
+
+        // --- 2. Fallback to Database (REMOVED) ---
 
         if (!fileData) {
             return NextResponse.json({ error: "File not found" }, { status: 404 });

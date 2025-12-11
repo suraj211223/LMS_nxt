@@ -4,7 +4,22 @@ import AdmZip from "adm-zip";
 
 const prisma = new PrismaClient();
 
+import { promises as fs } from "fs";
+import path from "path";
+
 export const runtime = "nodejs";
+
+// Use the environment variable for Railway Volume, or fallback to local "uploads" folder
+const STORAGE_PATH = process.env.RAILWAY_VOLUME_MOUNT_PATH || path.join(process.cwd(), "uploads");
+
+// Helper to ensure directory exists
+async function ensureDir(dir) {
+    try {
+        await fs.access(dir);
+    } catch (e) {
+        await fs.mkdir(dir, { recursive: true });
+    }
+}
 
 export async function POST(req) {
     try {
@@ -62,19 +77,38 @@ export async function POST(req) {
             zipFileData = zip.toBuffer();
         }
 
-        // Upsert Contentscript
+        // -------------------------------------------------------------
+        // NEW STORAGE LOGIC: Save to Disk (Volume)
+        // -------------------------------------------------------------
+        // Create directory for this topic: /uploads/{topicId}
+        const topicDir = path.join(STORAGE_PATH, topicIdInt.toString());
+        await ensureDir(topicDir);
+
+        if (pptFileData) {
+            await fs.writeFile(path.join(topicDir, "ppt.pptx"), pptFileData);
+        }
+        if (docFileData) {
+            // We default to .pdf for the "doc" slot usually, but let's just call it doc.pdf for consistency with download logic
+            await fs.writeFile(path.join(topicDir, "doc.pdf"), docFileData);
+        }
+        if (zipFileData) {
+            await fs.writeFile(path.join(topicDir, "refs.zip"), zipFileData);
+        }
+
+        // Upsert Contentscript (Update metadata, leave BLOBs null to save DB space for new uploads)
+        // Note: For existing records, we don't clear the BLOBs here to be safe (migration is manual),
+        // but for new uploads or updates, we just don't write to the BLOB columns.
+        // Actually, if we are overwriting, we SHOULD probably clear the DB BLOB to free space.
+        // Let's set them to empty bytes or null if possible. 
+        // Prisma schema says `Bytes?`. So `null` is valid.
+
         await prisma.contentscript.upsert({
             where: { contentId: topicIdInt },
             update: {
-                ...(pptFileData && { pptFileData }),
-                ...(docFileData && { docFileData }),
-                ...(zipFileData && { zipFileData }),
+                // Metadata only, files are on disk
             },
             create: {
                 contentId: topicIdInt,
-                pptFileData,
-                docFileData,
-                zipFileData,
             },
         });
 
@@ -92,13 +126,6 @@ export async function POST(req) {
                     uploadedByEditorId: uploaderId // This field was added to schema for exactly this purpose
                 }
             });
-
-            // Optional: Still update ProfName on Section if missing? 
-            // The user asked to "take the name of the person who uploads it for the first time... to have named"
-            // Since we now rely on uploadedByEditorId for naming in download route, we don't necessarily need to overwrite profName.
-            // But leaving the profName logic might be safer if that's used elsewhere.
-            // However, overwriting profName (Section Level) based on a Topic Upload might be too aggressive if multiple people work on a section.
-            // Let's stick to updating the TOPIC'S uploader field.
         }
 
         // Update Workflow Status

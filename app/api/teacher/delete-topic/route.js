@@ -6,6 +6,12 @@ const prisma = new PrismaClient();
 
 export const runtime = "nodejs";
 
+import { promises as fs } from "fs";
+import path from "path";
+
+// Use the environment variable for Railway Volume, or fallback to local "uploads" folder
+const STORAGE_PATH = process.env.RAILWAY_VOLUME_MOUNT_PATH || path.join(process.cwd(), "uploads");
+
 export async function DELETE(req) {
   try {
     const { searchParams } = new URL(req.url);
@@ -58,6 +64,17 @@ export async function DELETE(req) {
     const result = await prisma.contentItem.delete({
       where: { id: parseInt(topicId) },
     });
+
+    // Cleanup: Delete files from disk (Volume) if they exist
+    try {
+      const topicDir = path.join(STORAGE_PATH, topicId);
+      await fs.rm(topicDir, { recursive: true, force: true });
+      // console.log(`Deleted files for topic ${topicId}`);
+    } catch (cleanupError) {
+      console.error("Error cleaning up files for deleted topic:", cleanupError);
+      // We generally don't want to fail the request just because file cleanup failed, 
+      // as the DB record is already gone.
+    }
 
     if (!result) {
       return NextResponse.json(

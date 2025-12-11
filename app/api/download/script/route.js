@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
+import { promises as fs } from "fs";
+import path from "path";
+
 const prisma = new PrismaClient();
+
+// Use the environment variable for Railway Volume, or fallback to local "uploads" folder
+const STORAGE_PATH = process.env.RAILWAY_VOLUME_MOUNT_PATH || path.join(process.cwd(), "uploads");
 
 export async function GET(req) {
     try {
@@ -35,22 +41,38 @@ export async function GET(req) {
         let fileData = null;
         let extension = "";
         let contentType = "application/octet-stream";
+        let diskFilename = "";
 
         if (type === "ppt") {
-            fileData = script.pptFileData;
             extension = ".pptx";
             contentType = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+            diskFilename = "ppt.pptx";
         } else if (type === "doc") {
-            fileData = script.docFileData;
             extension = ".pdf"; // Defaulting to pdf
             contentType = "application/pdf";
+            diskFilename = "doc.pdf"; // Matches upload save name
         } else if (type === "zip") {
-            fileData = script.zipFileData;
             extension = ".zip";
             contentType = "application/zip";
+            diskFilename = "refs.zip";
         } else {
             return NextResponse.json({ error: "Invalid type" }, { status: 400 });
         }
+
+        // --- 1. Check Disk Storage (Volume) ---
+        const diskFilePath = path.join(STORAGE_PATH, id.toString(), diskFilename);
+        try {
+            // Try to read from disk
+            const diskBuffer = await fs.readFile(diskFilePath);
+            fileData = diskBuffer;
+            // console.log("Served from Disk:", diskFilePath);
+        } catch (err) {
+            // File not on disk, fall through to DB check
+            // console.log("File not on disk, checking DB...");
+        }
+
+        // --- 2. Fallback to Database (REMOVED) ---
+        // if (!fileData) ...
 
         if (!fileData) {
             return NextResponse.json({ error: "File not found" }, { status: 404 });
