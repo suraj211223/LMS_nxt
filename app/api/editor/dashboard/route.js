@@ -39,13 +39,7 @@ export async function GET() {
                 assignedEditor: {
                   include: { role: true }
                 },
-                contentscript: {
-                  select: {
-                    pptFileData: true,
-                    docFileData: true,
-                    zipFileData: true
-                  }
-                }
+                contentscript: true
               }
             }
           }
