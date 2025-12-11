@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
+import { promises as fs } from "fs";
+import path from "path";
+
 const prisma = new PrismaClient();
+
+// Use the environment variable for Railway Volume, or fallback to local "uploads" folder
+const STORAGE_PATH = process.env.RAILWAY_VOLUME_MOUNT_PATH || path.join(process.cwd(), "uploads");
 
 export async function GET(req) {
     try {
@@ -35,22 +41,41 @@ export async function GET(req) {
         let fileData = null;
         let extension = "";
         let contentType = "application/octet-stream";
+        let diskFilename = "";
 
-        if (type === "ppt") {
-            fileData = script.pptFileData;
-            extension = ".pptx";
-            contentType = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
-        } else if (type === "doc") {
-            fileData = script.docFileData;
-            extension = ".pdf"; // Defaulting to pdf
-            contentType = "application/pdf";
-        } else if (type === "zip") {
-            fileData = script.zipFileData;
-            extension = ".zip";
-            contentType = "application/zip";
-        } else {
-            return NextResponse.json({ error: "Invalid type" }, { status: 400 });
+        let searchPrefix = "";
+        if (type === "ppt") searchPrefix = "ppt.";
+        else if (type === "doc") searchPrefix = "doc.";
+        else if (type === "zip") searchPrefix = "refs.";
+        else return NextResponse.json({ error: "Invalid type" }, { status: 400 });
+
+        // --- 1. Check Disk Storage (Volume) ---
+        const topicDir = path.join(STORAGE_PATH, id.toString());
+
+        try {
+            const files = await fs.readdir(topicDir);
+            const match = files.find(f => f.startsWith(searchPrefix));
+
+            if (match) {
+                fileData = await fs.readFile(path.join(topicDir, match));
+                // Determine mime/ext
+                const ext = path.extname(match).toLowerCase();
+                extension = ext;
+
+                // Set Content Type
+                if (ext === ".pptx") contentType = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+                else if (ext === ".ppt") contentType = "application/vnd.ms-powerpoint";
+                else if (ext === ".pdf") contentType = "application/pdf";
+                else if (ext === ".docx") contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+                else if (ext === ".doc") contentType = "application/msword";
+                else if (ext === ".zip") contentType = "application/zip";
+            }
+        } catch (e) {
+            // Not found or error
         }
+
+        // --- 2. Fallback to Database (REMOVED) ---
+        // if (!fileData) ...
 
         if (!fileData) {
             return NextResponse.json({ error: "File not found" }, { status: 404 });
