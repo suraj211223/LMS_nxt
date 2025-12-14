@@ -64,10 +64,10 @@ export async function GET(req) {
             }
         }
 
-        const safeTopic = topicName.replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "_");
-        const safeTeacher = teacherName.replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "_");
+        const safeTopic = topicName.replace(/[^a-zA-Z0-9 \-]/g, "").trim();
+        const safeTeacher = teacherName.replace(/[^a-zA-Z0-9 \-]/g, "").trim();
 
-        const filenameBase = `U${unitNum}V${topicNum}_${safeTopic}_${safeTeacher}`;
+        const filenameBase = `U${unitNum}V${topicNum} - ${safeTopic} - ${safeTeacher}`;
 
         let fileData = null;
         let filename = "";

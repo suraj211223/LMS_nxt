@@ -111,15 +111,12 @@ export async function GET(req) {
             }
         }
 
-        // Format: U01V01_TopicName_TeacherName.ext
-        // We sanitize the names to separate with underscores and remove weird chars if needed, 
-        // but user requested "Topic name_teacher name". We will keep spaces or use underscores 
-        // based on standard safe file naming.
-        // Let's use underscores for spaces to ensure it works well on all OS.
-        const safeTopic = topicName.replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "_");
-        const safeTeacher = teacherName.replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "_");
+        // Format: U01V01 - Topic Name - Teacher Name.ext
+        // We sanitize the names to allow spaces and dashes but remove other special chars.
+        const safeTopic = topicName.replace(/[^a-zA-Z0-9 \-]/g, "").trim();
+        const safeTeacher = teacherName.replace(/[^a-zA-Z0-9 \-]/g, "").trim();
 
-        const filename = `U${unitNum}V${topicNum}_${safeTopic}_${safeTeacher}${extension}`;
+        const filename = `U${unitNum}V${topicNum} - ${safeTopic} - ${safeTeacher}${extension}`;
 
         // Convert Buffer to Blob-like response
         const headers = new Headers();
