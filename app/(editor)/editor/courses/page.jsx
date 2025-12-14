@@ -1,4 +1,4 @@
-"use client"; // ✨ Step 1: Make it a Client Component
+"use client"; // Step 1: Make it a Client Component
 import React, { useState, useEffect, Suspense } from "react";
 import { Grid, Box, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import { useSearchParams } from "next/navigation";
@@ -6,7 +6,7 @@ import EditorCoursecard from "@/app/client/components/EditorCoursecard";
 
 function CourseContent() {
   const searchParams = useSearchParams();
-  // --- ✨ Step 2: Add state for courses and filters ---
+  // --- Step 2: Add state for courses and filters ---
   const [courses, setCourses] = useState([]);
   const [filteredCourses, setFilteredCourses] = useState([]);
   const [schoolOptions, setSchoolOptions] = useState([]);
@@ -16,7 +16,7 @@ function CourseContent() {
   const [selectedSchool, setSelectedSchool] = useState("");
   const [selectedProgramme, setSelectedProgramme] = useState("");
 
-  // --- ✨ Step 3: Fetch data on the client side ---
+  // --- Step 3: Fetch data on the client side ---
   useEffect(() => {
     async function fetchData() {
       // Client-side fetch can use a relative URL
@@ -52,7 +52,7 @@ function CourseContent() {
     fetchData();
   }, [searchParams]); // Re-run if searchParams change (though unlikely component mount issues, good practice)
 
-  // --- ✨ Step 4: Apply filters when state changes ---
+  // --- Step 4: Apply filters when state changes ---
   useEffect(() => {
     let tempCourses = [...courses];
 
@@ -92,7 +92,7 @@ function CourseContent() {
         My Courses
       </div>
 
-      {/* === ✨ NEW FILTER MENU BOXES === */}
+      {/* === NEW FILTER MENU BOXES === */}
       <Box sx={{ display: 'flex', gap: 2, mb: 3, pl: 3 }}>
         <FormControl sx={{ minWidth: 240 }}>
           <InputLabel id="school-filter-label">Filter by School</InputLabel>
@@ -134,7 +134,7 @@ function CourseContent() {
 
       <div className="w-full text-black p-5">
         <Grid container spacing={3}>
-          {/* ✨ Step 5: Map over the filteredCourses state */}
+          {/* Step 5: Map over the filteredCourses state */}
           {filteredCourses.map((item) => (
             <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={item.course_id}>
               <EditorCoursecard

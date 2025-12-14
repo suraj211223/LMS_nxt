@@ -44,7 +44,7 @@ const EditorDash = () => {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [currentTopic, setCurrentTopic] = useState(null);
   const [videoLink, setVideoLink] = useState("");
-  const [additionalLink, setAdditionalLink] = useState(""); // ✨ New State
+  const [additionalLink, setAdditionalLink] = useState(""); // New State
   const [viewedFeedbackTopics, setViewedFeedbackTopics] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
@@ -121,7 +121,7 @@ const EditorDash = () => {
         body: JSON.stringify({
           topicId: currentTopic.content_id,
           videoLink: videoLink,
-          additionalLink: additionalLink, // ✨ Send to API
+          additionalLink: additionalLink, // Send to API
           newStatus: 'Under_Review'
         }),
       });
@@ -638,7 +638,7 @@ const EditorDash = () => {
                                       }
                                     }}
                                   >
-                                    {(topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted') ? "Record"
+                                    {(topic.workflow_status === 'Editing' || topic.workflow_status === 'Scripted') ? "Start"
                                       : (topic.workflow_status === 'Post_Editing' || topic.workflow_status === 'ReadyForVideoPrep' ? (topic.review_notes ? "Re-upload Video" : "Upload Video")
                                         : (topic.workflow_status === 'Approved' ? "Publish"
                                           : "Edit Video Link"))}
@@ -702,7 +702,7 @@ const EditorDash = () => {
                 type="url"
                 fullWidth
                 variant="outlined"
-                value={additionalLink} // ✨ New State
+                value={additionalLink} // New State
                 onChange={(e) => setAdditionalLink(e.target.value)}
                 placeholder="https://example.com/resources"
                 helperText="Link for extra resources, viewable by TAs and Publishers."

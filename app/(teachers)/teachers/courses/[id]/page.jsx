@@ -173,7 +173,7 @@ export default function CourseStructureDesign() {
     }
   };
 
-  // ✨ New function to approve script (TA only)
+  // Function to approve script (TA only)
   const handleApproveScript = async (topicId) => {
     if (!window.confirm("Approve script and send to editor?")) return;
     try {
@@ -268,7 +268,7 @@ export default function CourseStructureDesign() {
                             const topicStatus =
                               topic.status?.toLowerCase() || "planned";
 
-                            // ✨ Logic for your button requirements
+                            // Logic for button requirements
                             const isScriptingDone = topicStatus !== "planned";
                             const isReviewStage = topicStatus === "under_review"; // Updated to match DB
 
@@ -367,7 +367,7 @@ export default function CourseStructureDesign() {
                                             topicIndex
                                           )
                                         }
-                                        disabled={topicStatus === "published" || (isScriptingDone && !canOverwrite)} // ✨ Locked if published
+                                        disabled={topicStatus === "published" || (isScriptingDone && !canOverwrite)} // Locked if published
                                       >
                                         <FileCheck />
                                       </IconButton>
@@ -384,7 +384,7 @@ export default function CourseStructureDesign() {
                                     </IconButton>
                                   </Tooltip>
 
-                                  {canApprove && ( // ✨ Conditional Render
+                                  {canApprove && ( // Conditional Render
                                     <Tooltip
                                       title={
                                         isReviewStage
@@ -405,7 +405,7 @@ export default function CourseStructureDesign() {
                                     </Tooltip>
                                   )}
 
-                                  {canApprove && topicStatus === "scripted" && ( // ✨ Approve Script Button
+                                  {canApprove && topicStatus === "scripted" && ( // Approve Script Button
                                     <Tooltip title="Approve Script (Send to Editor)">
                                       <IconButton
                                         size="small"
@@ -472,7 +472,7 @@ export default function CourseStructureDesign() {
       <CreateTopicmodal
         open={openTopicModal}
         onClose={() => setOpenTopicModal(false)}
-        unitId={currentUnitId} // ✨ Pass unitId
+        unitId={currentUnitId} // Pass unitId
       // Note: You must update CreateTopicmodal to accept and use this 'unitId' prop
       />
 
@@ -515,7 +515,7 @@ export default function CourseStructureDesign() {
         topic={currentTopic}
         onFeedbackSubmit={handleFeedbackSubmit}
         onApprove={handleApprove}
-        canApprove={canApprove} // ✨ Pass prop
+        canApprove={canApprove} // Pass prop
       />
     </div>
   );

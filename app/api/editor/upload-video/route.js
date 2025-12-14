@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 export async function POST(req) {
 
     try {
-        const { topicId, videoLink, additionalLink, newStatus } = await req.json(); // ✨ Received additionalLink
+        const { topicId, videoLink, additionalLink, newStatus } = await req.json(); // Received additionalLink
         const cookieStore = await cookies();
         const userId = cookieStore.get("userId")?.value;
 

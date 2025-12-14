@@ -22,7 +22,7 @@ export async function POST(request) {
       workflowStatus: dbStatus,
     };
 
-    // ✨ Update Timestamps based on status
+    // Update Timestamps based on status
     if (newStatus === "Approved") {
       updateData.approvedAt = new Date();
     }
