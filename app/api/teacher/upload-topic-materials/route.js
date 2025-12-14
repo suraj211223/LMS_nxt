@@ -78,9 +78,7 @@ export async function POST(req) {
             },
         });
 
-        // -------------------------------------------------------------
-        // LOGIC: Set Uploader (Editor/Teacher) Reference
-        // -------------------------------------------------------------
+        // Link Uploader (Editor/Teacher)
         if (userId) {
             const uploaderId = parseInt(userId);
 

@@ -56,12 +56,12 @@ export async function GET(req) {
             return NextResponse.json({ error: "File not found" }, { status: 404 });
         }
 
-        // --- Calculate Filename ---
+        // Calculate Filename from metadata
         // 1. Unit Number (from Section Order Index)
         const unitNum = (script.content.section.orderIndex || 0).toString().padStart(2, "0");
 
         // 2. Topic Number (Calculated by counting topics in the same section with lower IDs)
-        // Note: We use order by id ascending as the default ordering assumption.
+        // Count previous topics to determine index (assumes chronological ID order)
         const prevTopicsCount = await prisma.contentItem.count({
             where: {
                 sectionId: script.content.sectionId,
@@ -91,10 +91,10 @@ export async function GET(req) {
         // but user requested "Topic name_teacher name". We will keep spaces or use underscores 
         // based on standard safe file naming.
         // Let's use underscores for spaces to ensure it works well on all OS.
-        const safeTopic = topicName.replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "_");
-        const safeTeacher = teacherName.replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "_");
+        const safeTopic = topicName.replace(/[^a-zA-Z0-9 \-_]/g, "").trim();
+        const safeTeacher = teacherName.replace(/[^a-zA-Z0-9 \-_]/g, "").trim();
 
-        const filename = `U${unitNum}V${topicNum}_${safeTopic}_${safeTeacher}${extension}`;
+        const filename = `U${unitNum}V${topicNum} - ${safeTopic} - ${safeTeacher}${extension}`;
 
         // Convert Buffer to Blob-like response
         const headers = new Headers();

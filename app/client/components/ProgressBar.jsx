@@ -92,7 +92,7 @@ QontoStepIcon.propTypes = {
 const ProgressBar = ({ status }) => {
   const steps = [
     "planning",
-    "pending approval", // ✨ New Stage
+    "pending approval", // Initial review stage
     "editing",
     "review",
     "published",

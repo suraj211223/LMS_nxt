@@ -82,7 +82,7 @@ export async function GET() {
               unit_title: section.title,
               program_name: course.program?.programName || "Unknown Program",
               video_link: topic.videoLink,
-              additionalLink: topic.additionalLink, // ✨ Fetch Additional Link
+              additionalLink: topic.additionalLink, // Fetch Additional Link
               review_notes: topic.reviewNotes,
               assignedEditor: topic.assignedEditor,
               has_ppt: !!topic.contentscript?.pptFileData,
@@ -105,7 +105,7 @@ export async function GET() {
       unit_title: topic.unit_title,
       program_name: topic.program_name,
       video_link: topic.video_link,
-      additional_link: topic.additionalLink, // ✨ Map Additional Link
+      additional_link: topic.additionalLink, // Map Additional Link
       review_notes: topic.review_notes,
       assigned_editor_name: (topic.assignedEditor && topic.assignedEditor.role && topic.assignedEditor.role.roleName === 'Editor')
         ? `${topic.assignedEditor.firstName || ''} ${topic.assignedEditor.lastName || ''}`.trim()

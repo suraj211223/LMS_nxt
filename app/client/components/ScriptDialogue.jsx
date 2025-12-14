@@ -128,7 +128,7 @@ const ScriptDialogue = ({ open, onClose, topic, onUploadSuccess }) => {
             disabled
             sx={{
               "& .MuiInputBase-input.Mui-disabled": {
-                "-webkit-text-fill-color": "#000",
+                "WebkitTextFillColor": "#000",
                 opacity: 1,
                 cursor: "default",
               },
@@ -164,7 +164,7 @@ const ScriptDialogue = ({ open, onClose, topic, onUploadSuccess }) => {
             disabled
             sx={{
               "& .MuiInputBase-input.Mui-disabled": {
-                "-webkit-text-fill-color": "#000",
+                "WebkitTextFillColor": "#000",
                 opacity: 1,
                 cursor: "default",
               },
@@ -202,7 +202,7 @@ const ScriptDialogue = ({ open, onClose, topic, onUploadSuccess }) => {
               fullWidth
               sx={{
                 "& .MuiInputBase-input.Mui-disabled": {
-                  "-webkit-text-fill-color": "#000",
+                  "WebkitTextFillColor": "#000",
                   opacity: 1,
                   cursor: "default",
                 },

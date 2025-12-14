@@ -30,7 +30,7 @@ export async function GET(req) {
             }
         });
 
-        // --- Calculate Filename ---
+        // Calculate Filename
         // 1. Unit Number (from Section Order Index)
         const unitNum = (topic.section.orderIndex || 0).toString().padStart(2, "0");
 
@@ -58,10 +58,10 @@ export async function GET(req) {
             }
         }
 
-        const safeTopic = topicName.replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "_");
-        const safeTeacher = teacherName.replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "_");
+        const safeTopic = topicName.replace(/[^a-zA-Z0-9 \-_]/g, "").trim();
+        const safeTeacher = teacherName.replace(/[^a-zA-Z0-9 \-_]/g, "").trim();
 
-        const filenameBase = `U${unitNum}V${topicNum}_${safeTopic}_${safeTeacher}`;
+        const filenameBase = `U${unitNum}V${topicNum} - ${safeTopic} - ${safeTeacher}`;
 
         let fileData = null;
         let filename = "";

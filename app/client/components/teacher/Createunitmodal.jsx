@@ -38,7 +38,7 @@ const Createunitmodal = ({ open, onClose, courseId }) => {
 
       const res = await fetch("/api/teacher/create-unit", {
         method: "POST",
-        body: formData, // Note: using FormData, not JSON
+        body: formData, // Sending FormData to handle potential file uploads
       });
 
       if (!res.ok) {

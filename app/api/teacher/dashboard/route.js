@@ -35,7 +35,7 @@ export async function GET(req) {
                 }
             },
             include: {
-                program: true, // ✨ Fetch program details
+                program: true, // Fetch program details
                 sections: {
                     include: {
                         contents: true
@@ -79,9 +79,9 @@ export async function GET(req) {
                             course_id: course.id,
                             course_title: course.title,
                             unit_title: section.title,
-                            program_name: course.program?.programName || "Unknown Program", // ✨ Map program name
+                            program_name: course.program?.programName || "Unknown Program", // Map program name
                             videoLink: topic.videoLink,
-                            additionalLink: topic.additionalLink // ✨ Return additional link
+                            additionalLink: topic.additionalLink // Return additional link
                         });
                     }
                 });

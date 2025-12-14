@@ -185,6 +185,9 @@ export default function AdminCourseDetail({ params }) {
                                                         {unit.topics ? unit.topics.length : 0} topics
                                                     </span>
                                                     <IconButton
+                                                        component="div"
+                                                        role="button"
+                                                        tabIndex={0}
                                                         size="small"
                                                         color="error"
                                                         onClick={(e) => handleDeleteUnit(unitId, e)}
