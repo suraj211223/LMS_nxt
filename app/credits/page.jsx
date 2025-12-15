@@ -68,6 +68,28 @@ const TeamMember = ({ member }) => {
                 </Typography>
 
                 <Typography
+                    variant="body2"
+                    sx={{
+                        color: "#64748b",
+                        mb: 0.5,
+                        fontSize: "0.9rem"
+                    }}
+                >
+                    {member.regNo}
+                </Typography>
+
+                <Typography
+                    variant="body2"
+                    sx={{
+                        color: "#64748b",
+                        mb: 1,
+                        fontSize: "0.9rem"
+                    }}
+                >
+                    {member.dept}
+                </Typography>
+
+                <Typography
                     variant="body1"
                     sx={{
                         color: "#64748b",
@@ -170,6 +192,8 @@ const CreditsPage = () => {
         {
             id: 1,
             name: 'K Suraj Das',
+            regNo: '2440224',
+            dept: 'Department of Computer Science',
             role: 'Developer',
             github: "https://github.com/suraj211223",
             linkedin: "https://www.linkedin.com/in/suraj-das-8b2896232"
@@ -177,6 +201,8 @@ const CreditsPage = () => {
         {
             id: 2,
             name: 'Rithesh K R',
+            regNo: '2440233',
+            dept: 'Department of Computer Science',
             role: 'Developer',
             github: 'https://github.com/Rithesh077',
             linkedin: 'https://www.linkedin.com/in/rithesh-k-r-284315325'
@@ -184,6 +210,8 @@ const CreditsPage = () => {
         {
             id: 3,
             name: 'Aditya Mehta',
+            regNo: '2440204',
+            dept: 'Department of Computer Science',
             role: 'Developer',
             github: 'https://github.com/AdityaMehta2006',
             linkedin: 'https://www.linkedin.com/in/aditya-mehta-155a40315/'
@@ -273,8 +301,7 @@ const CreditsPage = () => {
                                 fontSize: "1rem"
                             }}
                         >
-                            We would like to extend our heartfelt gratitude to everyone who contributed to making this website a reality.
-                            This project represents countless hours of dedication, creativity, and collaboration.
+                            We would like to extend our heartfelt gratitude to Dr Ashok Immanuel sir for his guidance and support in making this website a reality.
                         </Typography>
                     </Box>
                 </Box>

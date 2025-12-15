@@ -67,13 +67,32 @@ export default function LoginPage() {
         }}
       >
         <Box sx={{ maxWidth: 420, width: "100%" }}>
-          <Typography
-            variant="h3"
-            sx={{ fontWeight: "bold", mb: 8, color: "#000" }}
-          >
-            WELCOME TO <br />
-            VL-PROLAB
-          </Typography>
+          <Box sx={{ mb: 6 }}>
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 600,
+                color: "#64748b",
+                letterSpacing: "0.1em",
+                mb: 1
+              }}
+            >
+              WELCOME TO
+            </Typography>
+            <Typography
+              variant="h3"
+              sx={{
+                fontWeight: 800,
+                color: "#0f172a",
+                letterSpacing: "-0.02em",
+                background: "linear-gradient(90deg, #000, #333)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent"
+              }}
+            >
+              VL-PROLAB
+            </Typography>
+          </Box>
 
           {/* Error */}
           {error && (
