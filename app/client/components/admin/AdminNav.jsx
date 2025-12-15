@@ -92,16 +92,6 @@ const AdminNav = () => {
             </button>
 
             <button
-              className={`rounded-xl px-3 py-2 transition-all duration-200 ${active === 2
-                ? "bg-black text-white"
-                : "bg-white text-black hover:bg-gray-200"
-                }`}
-              onClick={() => { router.push(`/admin/courses`); isactive(2); }}
-            >
-              Courses
-            </button>
-
-            <button
               className={`rounded-xl px-3 py-2 transition-all duration-200 ${active === 3
                 ? "bg-black text-white"
                 : "bg-white text-black hover:bg-gray-200"
@@ -109,6 +99,16 @@ const AdminNav = () => {
               onClick={() => { router.push(`/admin/programs`); isactive(3); }}
             >
               Programs
+            </button>
+
+            <button
+              className={`rounded-xl px-3 py-2 transition-all duration-200 ${active === 2
+                ? "bg-black text-white"
+                : "bg-white text-black hover:bg-gray-200"
+                }`}
+              onClick={() => { router.push(`/admin/courses`); isactive(2); }}
+            >
+              Courses
             </button>
           </div>
 

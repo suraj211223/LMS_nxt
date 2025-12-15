@@ -301,7 +301,7 @@ const CreditsPage = () => {
                                 fontSize: "1rem"
                             }}
                         >
-                            We would like to extend our heartfelt gratitude to Dr Ashok Immanuel sir for his guidance and support in making this website a reality.
+                            We would like to extend our heartfelt gratitude to <Box component="span" sx={{ fontWeight: "bold" }}>Dr Ashok Immanuel</Box> sir for his guidance and support in making this website a reality.
                         </Typography>
                     </Box>
                 </Box>
