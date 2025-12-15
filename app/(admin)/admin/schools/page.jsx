@@ -77,9 +77,7 @@ function Schools() {
                                             <Typography variant="h6" fontWeight="bold">
                                                 {school.name}
                                             </Typography>
-                                            <Typography variant="body2" color="text.secondary">
-                                                ID: {school.id}
-                                            </Typography>
+
                                         </CardContent>
                                     </Card>
                                 </div>
