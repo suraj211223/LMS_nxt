@@ -406,14 +406,13 @@ export default function CourseStructureDesign() {
                                     </Tooltip>
                                   )}
 
-                                  {canApprove && (topicStatus === "scripted" || topicStatus === "editing") && (!hasMaterials || topic.materialsApproved) && ( // Approve Script Button (Text only OR after materials approved)
-                                    <Tooltip title={topicStatus === "editing" ? "Already Sent to Editor" : "Approve Script (Send to Editor)"}>
+                                  {canApprove && topicStatus === "scripted" && (!hasMaterials || topic.materialsApproved) && ( // Approve Script Button (Text only OR after materials approved)
+                                    <Tooltip title="Approve Script (Send to Editor)">
                                       <span>
                                         <IconButton
                                           size="small"
-                                          disabled={topicStatus === "editing"}
                                           onClick={() => handleApproveScript(topic.content_id)}
-                                          sx={{ color: topicStatus === "editing" ? "gray" : "#f59e0b" }}
+                                          sx={{ color: "#f59e0b" }}
                                         >
                                           <Send />
                                         </IconButton>

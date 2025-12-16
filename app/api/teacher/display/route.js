@@ -122,7 +122,7 @@ export async function GET(req) {
                 doc: hasDoc,
                 zip: hasZip,
               },
-              materials_approved: item.materialsApproved,
+              materialsApproved: item.materialsApproved,
             };
           })),
         }))),
