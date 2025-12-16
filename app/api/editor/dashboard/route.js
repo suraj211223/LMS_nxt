@@ -84,7 +84,7 @@ export async function GET() {
           // Assignment Logic: 
           // 1. If Unassigned (assignedEditorId is null), show to everyone (Job Board)
           // 2. If Assigned, ONLY show to the assigned editor
-          const isAssignedToMe = !topic.assignedEditorId || (userId && topic.assignedEditorId === parseInt(userId));
+          const isAssignedToMe = !topic.assignedEditorId || (userId && topic.assignedEditorId === parseInt(userId)) || (canPublish && topic.workflowStatus === "Approved");
 
           if (topic.workflowStatus !== "Planned" && topic.workflowStatus !== "Scripted" && topic.workflowStatus !== "Published" && isAssignedToMe) {
 

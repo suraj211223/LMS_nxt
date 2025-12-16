@@ -159,7 +159,7 @@ export default function CourseStructureDesign() {
         },
         body: JSON.stringify({
           topicId: topicId,
-          newStatus: 'Published'
+          newStatus: 'Approved'
         }),
       });
 
@@ -389,7 +389,7 @@ export default function CourseStructureDesign() {
                                     <Tooltip
                                       title={
                                         isReviewStage
-                                          ? "Approve Topic"
+                                          ? "Approve Topic (Send to Publisher)"
                                           : "Available only during review stage"
                                       }
                                     >
