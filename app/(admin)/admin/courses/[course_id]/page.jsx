@@ -354,14 +354,14 @@ export default function AdminCourseDetail({ params }) {
                                                                     )}
 
                                                                     {/* Admin Approve Materials Button */}
-                                                                    {(topicStatus === "scripted" || topicStatus === "Editing") && (!(topic.script?.ppt || topic.script?.doc || topic.script?.zip) || topic.materialsApproved) && (
-                                                                        <Tooltip title={topicStatus === "Editing" ? "Already Sent to Editor" : "Approve Script (Send to Editor)"}>
+                                                                    {(topicStatus === "scripted" || topicStatus === "editing") && (!(topic.script?.ppt || topic.script?.doc || topic.script?.zip) || topic.materialsApproved) && (
+                                                                        <Tooltip title={topicStatus === "editing" ? "Already Sent to Editor" : "Approve Script (Send to Editor)"}>
                                                                             <span>
                                                                                 <IconButton
                                                                                     size="small"
-                                                                                    disabled={topicStatus === "Editing"}
+                                                                                    disabled={topicStatus === "editing"}
                                                                                     onClick={() => handleApproveScript(realTopicId)}
-                                                                                    sx={{ color: topicStatus === "Editing" ? "gray" : "#f59e0b" }}
+                                                                                    sx={{ color: topicStatus === "editing" ? "gray" : "#f59e0b" }}
                                                                                 >
                                                                                     <Send size={18} />
                                                                                 </IconButton>
