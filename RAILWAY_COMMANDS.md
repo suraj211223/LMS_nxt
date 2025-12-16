@@ -7,11 +7,12 @@ This command compiles your Next.js application. It runs once during the build ph
 
 **Command:**
 ```bash
-npx prisma generate && npm run build && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/
+npx prisma generate && npm run build && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/ && node copy_prisma.js
 ```
 
-*   `npx prisma generate`: Generates the Prisma Client so your code can talk to the database (even though it doesn't connect during build, the types are needed).
-*   `npm run build`: Runs `next build` to compile your React/Next.js code.
+*   `npx prisma generate`: Generates the Prisma Client.
+*   `npm run build`: Runs `next build` (and now `node copy_prisma.js`).
+*   `copy_prisma.js`: Ensures the `prisma` folder is available in the standalone build for the start command.
 
 ---
 
@@ -20,9 +21,9 @@ This command runs every time your server starts (or restarts). It handles databa
 
 **Command:**
 ```bash
-npx prisma migrate deploy && node prisma/seed.js && HOSTNAME=0.0.0.0 node .next/standalone/server.js
+npx prisma db push --schema=.next/standalone/prisma/schema.prisma && node .next/standalone/prisma/seed.js && HOSTNAME=0.0.0.0 node .next/standalone/server.js
 ```
 
-*   `npx prisma migrate deploy`: Updates your production database schema to match your `schema.prisma`.
-*   `node prisma/seed.js`: Runs your seeding script to populates default data (Users, Roles, Admins) if they don't exist.
-*   `npm start`: Launches the production server (`next start`).
+*   `npx prisma db push`: Pushes the schema state to the database (bypassing migration history checks).
+*   `node .next/standalone/prisma/seed.js`: Runs your seeding script.
+*   `node ...server.js`: Launches the production server.

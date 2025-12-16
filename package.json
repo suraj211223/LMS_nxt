@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "cross-env NEXT_DISABLE_TURBOPACK=1 next dev",
-    "build": "npx prisma db push && next build",
-    "start": "node .next/standalone/server.js",
+    "build": "next build && node copy_prisma.js",
+    "start": "npx prisma db push --schema=.next/standalone/prisma/schema.prisma && node .next/standalone/server.js",
     "prisma:generate": "prisma generate",
     "prisma:db-pull": "prisma db pull",
     "prisma:migrate": "prisma migrate dev --name",
