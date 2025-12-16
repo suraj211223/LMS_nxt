@@ -14,7 +14,8 @@ export async function POST(req) {
         const updatedTopic = await prisma.contentItem.update({
             where: { id: parseInt(topicId) },
             data: {
-                materialsApproved: true
+                materialsApproved: true,
+                workflowStatus: "Editing"
             }
         });
 

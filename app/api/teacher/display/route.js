@@ -122,7 +122,7 @@ export async function GET(req) {
                 doc: hasDoc,
                 zip: hasZip,
               },
-              materials_approved: item.materialsApproved,
+              materialsApproved: item.materialsApproved,
             };
           })),
         }))),
@@ -186,6 +186,7 @@ function mapWorkflowStatus(dbStatus) {
     ReadyForVideoPrep: "ready_for_video_prep",
     Under_Review: "under_review",
     Published: "published",
+    Approved: "approved",
   };
 
   return statusMap[dbStatus] || "planned";

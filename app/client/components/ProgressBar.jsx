@@ -113,8 +113,10 @@ const ProgressBar = ({ status }) => {
     activeStep = 2; // Editing
   } else if (statusLower === "under_review") {
     activeStep = 3; // Review
+  } else if (statusLower === "approved") {
+    activeStep = 4; // Approved (Ready to Publish)
   } else if (statusLower === "published") {
-    activeStep = 4; // Published
+    activeStep = 5; // Published
   } else {
     activeStep = 0; // Default
   }

@@ -228,7 +228,7 @@ const EditorDash = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 pt-8 px-20">
             {[
               { label: "Total Topics", value: stats.totalTopics, bg: "rgba(59,130,246,0.1)", color: "#1d4ed8", borderColor: "#3b82f6" },
-              { label: "In Editing", value: stats.inEditing + (stats.scripted || 0), bg: "rgba(251,146,60,0.1)", color: "#c2410c", borderColor: "#fb923c" },
+              { label: "In Editing", value: stats.inEditing, bg: "rgba(251,146,60,0.1)", color: "#c2410c", borderColor: "#fb923c" },
               { label: "Under Review", value: stats.underReview, bg: "rgba(168,85,247,0.1)", color: "#7c2d12", borderColor: "#a855f7" },
               { label: "Approved", value: stats.approved, bg: "rgba(16,185,129,0.1)", color: "#047857", borderColor: "#10b981" },
               { label: "Published", value: stats.published, bg: "rgba(34,197,94,0.1)", color: "#15803d", borderColor: "#22c55e" },

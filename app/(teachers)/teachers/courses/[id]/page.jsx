@@ -159,7 +159,7 @@ export default function CourseStructureDesign() {
         },
         body: JSON.stringify({
           topicId: topicId,
-          newStatus: 'Published'
+          newStatus: 'Approved'
         }),
       });
 
@@ -271,6 +271,7 @@ export default function CourseStructureDesign() {
                             // Logic for button requirements
                             const isScriptingDone = topicStatus !== "planned";
                             const isReviewStage = topicStatus === "under_review"; // Updated to match DB
+                            const hasMaterials = topic.script?.ppt || topic.script?.doc || topic.script?.zip;
 
                             return (
                               <Paper
@@ -388,7 +389,7 @@ export default function CourseStructureDesign() {
                                     <Tooltip
                                       title={
                                         isReviewStage
-                                          ? "Approve Topic"
+                                          ? "Approve Topic (Send to Publisher)"
                                           : "Available only during review stage"
                                       }
                                     >
@@ -405,19 +406,21 @@ export default function CourseStructureDesign() {
                                     </Tooltip>
                                   )}
 
-                                  {canApprove && topicStatus === "scripted" && ( // Approve Script Button
+                                  {canApprove && topicStatus === "scripted" && (!hasMaterials || topic.materialsApproved) && ( // Approve Script Button (Text only OR after materials approved)
                                     <Tooltip title="Approve Script (Send to Editor)">
-                                      <IconButton
-                                        size="small"
-                                        onClick={() => handleApproveScript(topic.content_id)}
-                                        sx={{ color: "#f59e0b" }}
-                                      >
-                                        <Send />
-                                      </IconButton>
+                                      <span>
+                                        <IconButton
+                                          size="small"
+                                          onClick={() => handleApproveScript(topic.content_id)}
+                                          sx={{ color: "#f59e0b" }}
+                                        >
+                                          <Send />
+                                        </IconButton>
+                                      </span>
                                     </Tooltip>
                                   )}
 
-                                  {canApprove && (topic.script?.ppt || topic.script?.doc || topic.script?.zip) && !topic.materialsApproved && topicStatus !== "published" && (
+                                  {canApprove && hasMaterials && !topic.materialsApproved && topicStatus !== "published" && (
                                     <Tooltip title="Approve Materials & Send to Editor">
                                       <span>
                                         <IconButton
@@ -436,7 +439,7 @@ export default function CourseStructureDesign() {
                                             }
                                           }}
                                         >
-                                          <CheckCircle />
+                                          <FileCheck />
                                         </IconButton>
                                       </span>
                                     </Tooltip>
