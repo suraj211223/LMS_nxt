@@ -18,7 +18,7 @@ import {
     Paper,
     Divider
 } from "@mui/material";
-import { Download, FileText, Presentation, Trash2, MessageSquare, CheckCircle } from "lucide-react";
+import { Download, FileText, Presentation, Trash2, MessageSquare, CheckCircle, FileCheck } from "lucide-react";
 import ProgressBar from "@/app/client/components/ProgressBar";
 import ReviewDialogue from "@/app/client/components/ReviewDialogue";
 
@@ -346,7 +346,7 @@ export default function AdminCourseDetail({ params }) {
                                                                                 color="warning"
                                                                                 onClick={() => handleApproveMaterials(realTopicId)}
                                                                             >
-                                                                                <CheckCircle size={18} />
+                                                                                <FileCheck size={18} />
                                                                             </IconButton>
                                                                         </Tooltip>
                                                                     )}

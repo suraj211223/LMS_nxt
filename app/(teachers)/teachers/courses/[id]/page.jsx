@@ -437,7 +437,7 @@ export default function CourseStructureDesign() {
                                             }
                                           }}
                                         >
-                                          <CheckCircle />
+                                          <FileCheck />
                                         </IconButton>
                                       </span>
                                     </Tooltip>
