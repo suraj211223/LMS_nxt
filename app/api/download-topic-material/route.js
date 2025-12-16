@@ -55,13 +55,15 @@ export async function GET(req) {
         let teacherName = topic.section.profName;
         const isPlaceholder = !teacherName || ["tbd", "to be decided", "unknown"].includes(teacherName.toLowerCase());
 
-        if (isPlaceholder) {
-            // Fallback 1: Use the name of the user who uploaded/created the content
-            if (topic.uploadedByEditor) {
-                teacherName = `${topic.uploadedByEditor.firstName} ${topic.uploadedByEditor.lastName || ''}`.trim();
-            } else {
-                teacherName = "TBD";
-            }
+        // Priority 1: Use the name of the user who uploaded/created the content
+        if (topic.uploadedByEditor) {
+            teacherName = `${topic.uploadedByEditor.firstName} ${topic.uploadedByEditor.lastName || ''}`.trim();
+        } else if (!isPlaceholder) {
+            // Priority 2: Use the Section Professor name if it's not a placeholder
+            teacherName = topic.section.profName;
+        } else {
+            // Priority 3: Fallback
+            teacherName = "TBD";
         }
 
         const safeTopic = topicName.replace(/[^a-zA-Z0-9 \-]/g, "").trim();

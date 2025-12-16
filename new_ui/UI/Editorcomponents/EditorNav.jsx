@@ -89,11 +89,11 @@ const EditorNav = () => {
                 }`}
               onClick={() => {
                 isactive(2);
-                router.push(`/editor/courses`);
+                router.push(`/editor/programs`);
                 toggleDrawer(false);
               }}
             >
-              Courses
+              Programs
             </button>
 
             <button
@@ -103,11 +103,11 @@ const EditorNav = () => {
                 }`}
               onClick={() => {
                 isactive(3);
-                router.push(`/editor/programs`);
+                router.push(`/editor/courses`);
                 toggleDrawer(false);
               }}
             >
-              Programs
+              Courses
             </button>
           </div>
 

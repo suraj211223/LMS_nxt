@@ -86,7 +86,7 @@ export async function GET() {
           // 2. If Assigned, ONLY show to the assigned editor
           const isAssignedToMe = !topic.assignedEditorId || (userId && topic.assignedEditorId === parseInt(userId)) || (canPublish && topic.workflowStatus === "Approved");
 
-          if (topic.workflowStatus !== "Planned" && topic.workflowStatus !== "Scripted" && topic.workflowStatus !== "Published" && isAssignedToMe) {
+          if (topic.workflowStatus !== "Planned" && topic.workflowStatus !== "Published" && isAssignedToMe) {
 
             // CHECK DISK FOR FILES
             let hasPpt = false;

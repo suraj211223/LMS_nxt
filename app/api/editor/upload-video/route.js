@@ -35,6 +35,12 @@ export async function POST(req) {
 
         console.log(`Updating topic ${id} with videoLink: ${videoLink} and status: ${dbStatus}`);
 
+        // Fetch existing topic to check if uploader is already set
+        const existingTopic = await prisma.contentItem.findUnique({
+            where: { id: id },
+            select: { uploadedByEditorId: true }
+        });
+
         const updateData = {
             videoLink: videoLink,
             additionalLink: additionalLink,
@@ -42,9 +48,12 @@ export async function POST(req) {
             uploadedAt: new Date(),
             reviewRequestAt: new Date(),
             ...(userId && { assignedEditorId: parseInt(userId) }),
-            // Also link as uploader if not already set (e.g. video added by editor)
-            ...(userId && { uploadedByEditorId: parseInt(userId) })
         };
+
+        // Only set uploader if not already set (preserve original uploader)
+        if (userId && existingTopic && !existingTopic.uploadedByEditorId) {
+            updateData.uploadedByEditorId = parseInt(userId);
+        }
 
         const updatedTopic = await prisma.contentItem.update({
             where: { id: id },
