@@ -52,18 +52,31 @@ export async function GET(req) {
         // 3. Topic Name & Teacher Name
         const topicName = topic.title || "Untitled";
 
+        // Teacher Name Logic
         let teacherName = topic.section.profName;
         const isPlaceholder = !teacherName || ["tbd", "to be decided", "unknown"].includes(teacherName.toLowerCase());
 
-        // Priority 1: Use the name of the user who uploaded/created the content
-        if (topic.uploadedByEditor) {
-            teacherName = `${topic.uploadedByEditor.firstName} ${topic.uploadedByEditor.lastName || ''}`.trim();
-        } else if (!isPlaceholder) {
-            // Priority 2: Use the Section Professor name if it's not a placeholder
-            teacherName = topic.section.profName;
-        } else {
-            // Priority 3: Fallback
-            teacherName = "TBD";
+        if (isPlaceholder) {
+            // Priority: Find the "Teacher" assigned to this Course
+            const assignedTeacher = await prisma.userCourseAssignment.findFirst({
+                where: {
+                    courseId: topic.section.courseId,
+                    user: {
+                        role: {
+                            roleName: "Teacher"
+                        }
+                    }
+                },
+                include: {
+                    user: true
+                }
+            });
+
+            if (assignedTeacher && assignedTeacher.user) {
+                teacherName = `${assignedTeacher.user.firstName} ${assignedTeacher.user.lastName || ''}`.trim();
+            } else {
+                teacherName = "TBD";
+            }
         }
 
         const safeTopic = topicName.replace(/[^a-zA-Z0-9 \-]/g, "").trim();

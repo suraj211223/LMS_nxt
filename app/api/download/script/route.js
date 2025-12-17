@@ -103,7 +103,7 @@ export async function GET(req) {
         const isPlaceholder = !teacherName || ["tbd", "to be decided", "unknown"].includes(teacherName.toLowerCase());
 
         if (isPlaceholder) {
-            // 1. Try to find a Teacher assigned to the Course
+            // Priority: Find the "Teacher" assigned to this Course
             const assignedTeacher = await prisma.userCourseAssignment.findFirst({
                 where: {
                     courseId: script.content.section.courseId,
@@ -120,10 +120,6 @@ export async function GET(req) {
 
             if (assignedTeacher && assignedTeacher.user) {
                 teacherName = `${assignedTeacher.user.firstName} ${assignedTeacher.user.lastName || ''}`.trim();
-            }
-            // 2. Fallback: Use the name of the user who uploaded/created the content
-            else if (script.content.uploadedByEditor) {
-                teacherName = `${script.content.uploadedByEditor.firstName} ${script.content.uploadedByEditor.lastName || ''}`.trim();
             } else {
                 teacherName = "TBD";
             }
