@@ -1,20 +1,19 @@
-const { PrismaClient } = require('@prisma/client');
+import { NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
+
 const prisma = new PrismaClient();
 
-async function main() {
-    console.log("--- Fixing School Names ---");
-    const oldName = "School of Management";
-    const newName = "School of Commerce, Finance and Accountancy";
-
+export async function GET() {
     try {
+        const oldName = "School of Management";
+        const newName = "School of Commerce, Finance and Accountancy";
+
         const oldSchool = await prisma.school.findFirst({ where: { name: oldName } });
         const newSchool = await prisma.school.findFirst({ where: { name: newName } });
 
-        console.log(`Old Exists: ${!!oldSchool} (ID: ${oldSchool?.id})`);
-        console.log(`New Exists: ${!!newSchool} (ID: ${newSchool?.id})`);
+        let message = "";
 
         if (oldSchool && newSchool) {
-            console.log("Both exist. Migrating data from Old -> New...");
             // Move Programs
             await prisma.program.updateMany({
                 where: { schoolId: oldSchool.id },
@@ -27,24 +26,20 @@ async function main() {
             });
             // Delete Old
             await prisma.school.delete({ where: { id: oldSchool.id } });
-            console.log("Migration Complete. Old school deleted.");
+            message = "Merged Old into New. Deleted Old.";
         }
         else if (oldSchool && !newSchool) {
-            console.log("Only Old exists. Renaming...");
             await prisma.school.update({
                 where: { id: oldSchool.id },
                 data: { name: newName }
             });
-            console.log("Rename Complete.");
-        }
-        else {
-            console.log("Nothing to do. School of Management doesn't exist anymore.");
+            message = "Renamed Old to New.";
+        } else {
+            message = "Nothing to fix.";
         }
 
-    } catch (e) {
-        console.error("Error:", e);
+        return NextResponse.json({ success: true, message });
+    } catch (error) {
+        return NextResponse.json({ error: String(error) }, { status: 500 });
     }
 }
-
-main()
-    .finally(async () => await prisma.$disconnect());
