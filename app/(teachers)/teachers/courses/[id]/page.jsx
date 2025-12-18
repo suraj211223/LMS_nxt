@@ -65,10 +65,10 @@ export default function CourseStructureDesign() {
   const [editingTopicId, setEditingTopicId] = useState(null);
   const [editValue, setEditValue] = useState("");
 
-  const handleStartEditUnit = (e, unit) => {
+  const handleStartEditUnit = (e, id, currentName) => {
     e.stopPropagation();
-    setEditingUnitId(unit.section_id || unit.id);
-    setEditValue(unit.name);
+    setEditingUnitId(id);
+    setEditValue(currentName);
   };
 
   const handleSaveUnit = async (e, unitId) => {
@@ -313,7 +313,7 @@ export default function CourseStructureDesign() {
                               className="border rounded px-2 py-1 text-sm text-black"
                               autoFocus
                             />
-                            <IconButton size="small" onClick={(e) => handleSaveUnit(e, unitId)} color="primary">
+                            <IconButton size="small" onClick={(e) => handleSaveUnit(e, unit.section_id)} color="primary">
                               <Save size={18} />
                             </IconButton>
                             <IconButton size="small" onClick={handleCancelEditUnit} color="error">
@@ -328,7 +328,7 @@ export default function CourseStructureDesign() {
                             <IconButton
                               size="small"
                               className="opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={(e) => handleStartEditUnit(e, unit)}
+                              onClick={(e) => handleStartEditUnit(e, unitId, unit.name)}
                             >
                               <Edit2 size={16} />
                             </IconButton>
