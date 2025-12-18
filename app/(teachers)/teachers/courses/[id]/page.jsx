@@ -352,9 +352,9 @@ export default function CourseStructureDesign() {
 
                                   <Tooltip
                                     title={
-                                      isScriptingDone
-                                        ? (canOverwrite ? "Edit Script (TA)" : "Scripting is complete")
-                                        : "Upload/Edit Script"
+                                      (topicStatus === "planned" || topicStatus === "scripted")
+                                        ? "Upload/Edit Script"
+                                        : "Locked (Under Review/Published)"
                                     }
                                   >
                                     {/* Span wrapper is needed for Tooltip on disabled button */}
@@ -368,7 +368,7 @@ export default function CourseStructureDesign() {
                                             topicIndex
                                           )
                                         }
-                                        disabled={topicStatus === "published" || (isScriptingDone && !canOverwrite)} // Locked if published
+                                        disabled={topicStatus !== "planned" && topicStatus !== "scripted"}
                                       >
                                         <FileCheck />
                                       </IconButton>
