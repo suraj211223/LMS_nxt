@@ -865,10 +865,7 @@ module.exports = {
             "userId": 70,
             "courseId": 45
         },
-        {
-            "userId": 71,
-            "courseId": 46
-        },
+
         {
             "userId": 71,
             "courseId": 47
