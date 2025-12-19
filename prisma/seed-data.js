@@ -868,6 +868,10 @@ module.exports = {
 
         {
             "userId": 71,
+            "courseId": 46
+        },
+        {
+            "userId": 71,
             "courseId": 47
         },
         {

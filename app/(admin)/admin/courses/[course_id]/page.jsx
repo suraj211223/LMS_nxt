@@ -16,7 +16,12 @@ import {
     Typography,
     Chip,
     Paper,
-    Divider
+    Divider,
+    TextField,
+    List,
+    ListItem,
+    ListItemText,
+    ListItemSecondaryAction
 } from "@mui/material";
 import { Download, FileText, Presentation, Trash2, MessageSquare, CheckCircle, FileCheck, Send } from "lucide-react";
 import ProgressBar from "@/app/client/components/ProgressBar";
@@ -230,6 +235,86 @@ export default function AdminCourseDetail({ params }) {
                     }
                     subheader={`${course.department || "Department"} • ${course.program || "Program"} • ${course.units ? course.units.length : 0} units • ${getAllTopics().length} topics`}
                 />
+            </Card>
+
+            {/* Assignment Management */}
+            <Card>
+                <CardHeader title="Assigned Teachers" subheader="Manage who can access this course" />
+                <CardContent>
+                    <div className="flex gap-4 mb-4">
+                        <TextField
+                            label="Teacher Email"
+                            variant="outlined"
+                            size="small"
+                            fullWidth
+                            id="teacher-email-input"
+                        />
+                        <Button
+                            variant="contained"
+                            onClick={async () => {
+                                const emailInput = document.getElementById("teacher-email-input");
+                                const email = emailInput.value;
+                                if (!email) return alert("Please enter an email");
+                                try {
+                                    const res = await fetch("/api/admin/assign", {
+                                        method: "POST",
+                                        body: JSON.stringify({ email, courseId }),
+                                    });
+                                    if (res.ok) {
+                                        emailInput.value = "";
+                                        fetchCourse();
+                                    } else {
+                                        const msg = await res.text();
+                                        alert(msg);
+                                    }
+                                } catch (e) {
+                                    console.error(e);
+                                    alert("Assignment failed");
+                                }
+                            }}
+                        >
+                            Assign
+                        </Button>
+                    </div>
+
+                    <List>
+                        {course.assigned_teachers && course.assigned_teachers.length > 0 ? (
+                            course.assigned_teachers.map((teacher) => (
+                                <ListItem key={teacher.id} divider>
+                                    <ListItemText
+                                        primary={teacher.name}
+                                        secondary={teacher.email}
+                                    />
+                                    <ListItemSecondaryAction>
+                                        <IconButton
+                                            edge="end"
+                                            aria-label="delete"
+                                            onClick={async () => {
+                                                if (!confirm(`Remove ${teacher.name} from this course?`)) return;
+                                                try {
+                                                    const res = await fetch("/api/admin/assign", {
+                                                        method: "DELETE",
+                                                        body: JSON.stringify({ userId: teacher.id, courseId }),
+                                                    });
+                                                    if (res.ok) fetchCourse();
+                                                    else alert("Failed to remove assignment");
+                                                } catch (e) {
+                                                    console.error(e);
+                                                }
+                                            }}
+                                        >
+                                            <Trash2 size={18} />
+                                        </IconButton>
+                                    </ListItemSecondaryAction>
+                                </ListItem>
+                            ))
+                        ) : (
+                            <Typography variant="body2" color="text.secondary">
+                                No teachers assigned.
+                            </Typography>
+                        )}
+                    </List>
+                </CardContent>
             </Card>
 
             {/* Course Structure */}

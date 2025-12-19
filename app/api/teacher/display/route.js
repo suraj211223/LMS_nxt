@@ -54,6 +54,11 @@ export async function GET(req) {
           program: {
             include: { school: true },
           },
+          assignments: {
+            include: {
+              user: true
+            }
+          },
           sections: {
             orderBy: { id: 'asc' },
             include: {
@@ -126,6 +131,11 @@ export async function GET(req) {
             };
           })),
         }))),
+        assigned_teachers: course.assignments.map(a => ({
+          id: a.user.id,
+          name: `${a.user.firstName} ${a.user.lastName}`,
+          email: a.user.email
+        })),
       };
 
       return NextResponse.json(courseData);
