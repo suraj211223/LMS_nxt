@@ -9,42 +9,142 @@ import {
   Stack,
   TextField,
   Chip,
-  Box
+  Box,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  IconButton,
+  Paper,
+  Typography
 } from "@mui/material";
+import { useDropzone } from 'react-dropzone';
+import { CloudUpload, Delete, InsertDriveFile, Description, Slideshow, Close, Add } from '@mui/icons-material';
+
+const FileUploadBox = ({ label, accept, onDrop, file, onDelete, multiple = false, files = [] }) => {
+  const [expanded, setExpanded] = useState(false);
+
+  // Auto-expand if files exist
+  React.useEffect(() => {
+    if (file || (multiple && files.length > 0)) {
+      setExpanded(true);
+    }
+  }, [file, files, multiple]);
+
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
+    onDrop,
+    accept,
+    multiple,
+    noClick: true, // We will bind click to the specific button
+    noKeyboard: true
+  });
+
+  if (!expanded && !file && (!files || files.length === 0)) {
+    return (
+      <Button
+        startIcon={<Add />}
+        onClick={() => setExpanded(true)}
+        sx={{ fontWeight: 'bold', textTransform: 'none', justifyContent: 'flex-start' }}
+      >
+        Add {label}
+      </Button>
+    )
+  }
+
+  return (
+    <Box sx={{ mt: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+        <Typography variant="subtitle2" color="text.secondary">{label}</Typography>
+        {!file && (!files || files.length === 0) && (
+          <IconButton size="small" onClick={() => setExpanded(false)}><Close fontSize="small" /></IconButton>
+        )}
+      </Box>
+
+      {/* Dropzone Area */}
+      {(!file && !multiple) || (multiple) ? (
+        <Paper
+          variant="outlined"
+          {...getRootProps()}
+          sx={{
+            p: 3,
+            textAlign: 'center',
+            backgroundColor: isDragActive ? '#f0f7ff' : '#fafafa',
+            borderStyle: 'dashed',
+            borderColor: isDragActive ? 'primary.main' : 'divider',
+            cursor: 'default',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 1
+          }}
+        >
+          <input {...getInputProps()} />
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            Drag and drop {multiple ? "files" : "file"} here
+          </Typography>
+          <Typography variant="caption" color="text.disabled" sx={{ mb: 1, display: 'block' }}>
+            - OR -
+          </Typography>
+          <Button variant="outlined" size="small" onClick={open}>
+            Browse Files
+          </Button>
+        </Paper>
+      ) : null}
+
+      {/* Selected File(s) Display */}
+      {(file || (files && files.length > 0)) && (
+        <List dense sx={{ bgcolor: 'background.paper', border: '1px solid #eee', borderRadius: 1, mt: 1 }}>
+          {!multiple && file && (
+            <ListItem
+              secondaryAction={
+                <IconButton edge="end" aria-label="delete" onClick={onDelete}>
+                  <Delete />
+                </IconButton>
+              }
+            >
+              <ListItemIcon><InsertDriveFile /></ListItemIcon>
+              <ListItemText
+                primary={file.name}
+                secondary={`${(file.size / 1024 / 1024).toFixed(2)} MB`}
+                primaryTypographyProps={{ noWrap: true, maxWidth: '200px' }}
+              />
+            </ListItem>
+          )}
+          {multiple && files.map((f, index) => (
+            <ListItem
+              key={index}
+              secondaryAction={
+                <IconButton edge="end" aria-label="delete" onClick={() => onDelete(index)}>
+                  <Delete />
+                </IconButton>
+              }
+            >
+              <ListItemIcon><InsertDriveFile /></ListItemIcon>
+              <ListItemText
+                primary={f.name}
+                secondary={`${(f.size / 1024 / 1024).toFixed(2)} MB`}
+                primaryTypographyProps={{ noWrap: true, maxWidth: '200px' }}
+              />
+            </ListItem>
+          ))}
+        </List>
+      )}
+    </Box>
+  );
+};
 
 const ScriptDialogue = ({ open, onClose, topic, onUploadSuccess }) => {
-  const [files, setFiles] = useState({
-    ppt: null,
-    courseMaterial: null,
-    referenceMaterials: [], // Changed to array for multiple files
-  });
+  const [pptFile, setPptFile] = useState(null);
+  const [docFile, setDocFile] = useState(null);
+  const [refFiles, setRefFiles] = useState([]);
 
   useEffect(() => {
     if (!open) {
-      setFiles({ ppt: null, courseMaterial: null, referenceMaterials: [] });
+      setPptFile(null);
+      setDocFile(null);
+      setRefFiles([]);
     }
   }, [open]);
-
-  const handleFileChange = (e) => {
-    if (e.target.name === "referenceMaterials") {
-      // Append new files to existing array
-      setFiles({
-        ...files,
-        referenceMaterials: [...files.referenceMaterials, ...Array.from(e.target.files)],
-      });
-    } else {
-      setFiles({
-        ...files,
-        [e.target.name]: e.target.files[0],
-      });
-    }
-  };
-
-  const removeReferenceFile = (index) => {
-    const newFiles = [...files.referenceMaterials];
-    newFiles.splice(index, 1);
-    setFiles({ ...files, referenceMaterials: newFiles });
-  };
 
   const handleSubmit = async () => {
     if (!topic) {
@@ -53,13 +153,10 @@ const ScriptDialogue = ({ open, onClose, topic, onUploadSuccess }) => {
       return;
     }
     const formData = new FormData();
-    if (files.ppt) formData.append("ppt", files.ppt);
-    if (files.courseMaterial) formData.append("courseMaterial", files.courseMaterial);
 
-    // Append all reference materials
-    files.referenceMaterials.forEach((file) => {
-      formData.append("referenceMaterials", file);
-    });
+    if (pptFile) formData.append("ppt", pptFile);
+    if (docFile) formData.append("courseMaterial", docFile);
+    refFiles.forEach(r => formData.append("referenceMaterials", r));
 
     formData.append("topicId", topic.content_id);
 
@@ -91,7 +188,6 @@ const ScriptDialogue = ({ open, onClose, topic, onUploadSuccess }) => {
     onClose();
   };
 
-  const getFileName = (file) => (file ? file.name : "");
 
   return (
     <Dialog
@@ -119,129 +215,35 @@ const ScriptDialogue = ({ open, onClose, topic, onUploadSuccess }) => {
         )}
       </DialogTitle>
       <DialogContent>
-        <Stack spacing={3} sx={{ mt: 2 }}>
-          {/* PPT Input */}
-          <TextField
-            label="PPT File (.ppt, .pptx)"
-            name="ppt"
-            value={getFileName(files.ppt)}
-            disabled
-            sx={{
-              "& .MuiInputBase-input.Mui-disabled": {
-                "-webkit-text-fill-color": "#000",
-                opacity: 1,
-                cursor: "default",
-              },
-              "& .MuiInputBase-root": {
-                paddingRight: "120px",
-              },
-            }}
-            InputProps={{
-              endAdornment: (
-                <Button
-                  variant="contained"
-                  component="label"
-                  sx={{ position: "absolute", right: 14 }}
-                >
-                  Choose File
-                  <input
-                    type="file"
-                    name="ppt"
-                    accept=".ppt,.pptx"
-                    onChange={handleFileChange}
-                    hidden
-                  />
-                </Button>
-              ),
-            }}
+        <Stack spacing={1} sx={{ mt: 2 }}>
+
+          {/* PPT Upload */}
+          <FileUploadBox
+            label="Presentation (PPT)"
+            accept={{ 'application/vnd.ms-powerpoint': ['.ppt'], 'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['.pptx'] }}
+            onDrop={(acceptedFiles) => { if (acceptedFiles[0]) setPptFile(acceptedFiles[0]); }}
+            file={pptFile}
+            onDelete={() => setPptFile(null)}
           />
 
-          {/* Course Material Input */}
-          <TextField
-            label="Course Material (.pdf, .doc)"
-            name="courseMaterial"
-            value={getFileName(files.courseMaterial)}
-            disabled
-            sx={{
-              "& .MuiInputBase-input.Mui-disabled": {
-                "-webkit-text-fill-color": "#000",
-                opacity: 1,
-                cursor: "default",
-              },
-              "& .MuiInputBase-root": {
-                paddingRight: "120px",
-              },
-            }}
-            InputProps={{
-              endAdornment: (
-                <Button
-                  variant="contained"
-                  component="label"
-                  sx={{ position: "absolute", right: 14 }}
-                >
-                  Choose File
-                  <input
-                    type="file"
-                    name="courseMaterial"
-                    accept=".pdf,.doc,.docx"
-                    onChange={handleFileChange}
-                    hidden
-                  />
-                </Button>
-              ),
-            }}
+          {/* Doc Upload */}
+          <FileUploadBox
+            label="Course Material (PDF/Doc)"
+            accept={{ 'application/pdf': ['.pdf'], 'application/msword': ['.doc'], 'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'] }}
+            onDrop={(acceptedFiles) => { if (acceptedFiles[0]) setDocFile(acceptedFiles[0]); }}
+            file={docFile}
+            onDelete={() => setDocFile(null)}
           />
 
-          {/* Reference Material Input (Multiple) */}
-          <Box>
-            <TextField
-              label="Reference Materials (Multiple)"
-              name="referenceMaterials"
-              value={`${files.referenceMaterials.length} files selected`}
-              disabled
-              fullWidth
-              sx={{
-                "& .MuiInputBase-input.Mui-disabled": {
-                  "-webkit-text-fill-color": "#000",
-                  opacity: 1,
-                  cursor: "default",
-                },
-                "& .MuiInputBase-root": {
-                  paddingRight: "120px",
-                },
-              }}
-              InputProps={{
-                endAdornment: (
-                  <Button
-                    variant="contained"
-                    component="label"
-                    sx={{ position: "absolute", right: 14 }}
-                  >
-                    Add Files
-                    <input
-                      type="file"
-                      name="referenceMaterials"
-                      accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.jpg,.png"
-                      onChange={handleFileChange}
-                      multiple // Allow multiple files
-                      hidden
-                    />
-                  </Button>
-                ),
-              }}
-            />
-            {/* Display selected files as chips */}
-            <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {files.referenceMaterials.map((file, index) => (
-                <Chip
-                  key={index}
-                  label={file.name}
-                  onDelete={() => removeReferenceFile(index)}
-                  size="small"
-                />
-              ))}
-            </Box>
-          </Box>
+          {/* Reference Upload */}
+          <FileUploadBox
+            label="Reference Materials (Zip/Any)"
+            accept={undefined}
+            multiple={true}
+            onDrop={(acceptedFiles) => setRefFiles(prev => [...prev, ...acceptedFiles])}
+            files={refFiles}
+            onDelete={(index) => setRefFiles(prev => prev.filter((_, i) => i !== index))}
+          />
 
         </Stack>
       </DialogContent>

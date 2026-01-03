@@ -78,6 +78,8 @@ export async function POST(req) {
             docFileData = Buffer.from(arrayBuffer);
         }
 
+
+
         // Handle Reference Materials (Zip them)
         let zipFileData = null;
         if (referenceFiles && referenceFiles.length > 0) {
@@ -126,10 +128,14 @@ export async function POST(req) {
 
         if (docFileData) {
             await clearOld("doc");
+            // const ext = (courseMaterialFile && courseMaterialFile.name) ? path.extname(courseMaterialFile.name) : ".pdf"; // commented out in original?
+            // Re-adding the logic correctly
             const ext = (courseMaterialFile && courseMaterialFile.name) ? path.extname(courseMaterialFile.name) : ".pdf";
             const safeExt = ext || ".pdf";
             await fs.writeFile(path.join(topicDir, `doc${safeExt}`), docFileData);
         }
+
+
 
         if (zipFileData) {
             await clearOld("refs");
