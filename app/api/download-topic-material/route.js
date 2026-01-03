@@ -99,6 +99,7 @@ export async function GET(req) {
         else if (type === "doc") searchPrefix = "doc.";
         else if (type === "zip") searchPrefix = "refs.";
 
+
         // --- 1. Check Disk Storage (Volume) ---
         const topicDir = path.join(STORAGE_PATH, topicId);
         try {
@@ -117,7 +118,9 @@ export async function GET(req) {
                 else if (ext === ".pdf") contentType = "application/pdf";
                 else if (ext === ".docx") contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
                 else if (ext === ".doc") contentType = "application/msword";
+                else if (ext === ".doc") contentType = "application/msword";
                 else if (ext === ".zip") contentType = "application/zip";
+
             }
         } catch (e) {
             // Not on disk
